@@ -20,7 +20,7 @@ INSTALLED_APPS = [
 ## Usage
 
 ### Create Websub callback
-Create celery task handler, usually in tasks.py:
+Create celery task handler, usually in `tasks.py`:
 
 ```
 from celery import shared_task
@@ -30,7 +30,7 @@ def news_task(data):
     print('got news!')
 ```
 
-Callback url should end with uuid. Register url for handler in urls.py:
+Callback url should end with uuid. Register url for handler in `urls.py`:
 
 ```
 from websubsub.views import WssView
@@ -92,9 +92,15 @@ Not implemented
 ## Settings
 
 `SITE_URL` - ex.: `https://example.com`. Required. Will be used to build full callback urls.
+
 `WEBSUBS_REDIS_URL` - ex.: `redis://redishost:6379`. Required. Will be used to lock atomic tasks.
+
 `WEBSUBS_DEFAULT_HUB_URL`
+
 `WEBSUBS_MAX_CONNECT_RETRIES`
+
 `WEBSUBS_MAX_HUB_ERROR_RETRIES`
+
 `WEBSUBS_MAX_VERIFY_RETRIES`
+
 `WEBSUBS_VERIFY_WAIT_TIME`
