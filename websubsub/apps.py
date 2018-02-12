@@ -25,6 +25,7 @@ class WebsubsubConfig(AppConfig):
     WEBSUBS_MAX_HUB_ERROR_RETRIES = 2
     WEBSUBS_MAX_VERIFY_RETRIES = 2
     WEBSUBS_VERIFY_WAIT_TIME = 60  # seconds
+    WEBSUBS_HUBS = {}
 
     def ready(self):
         self.configure()

@@ -1,4 +1,3 @@
-import logging
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -6,34 +5,38 @@ from django.core.management.base import BaseCommand
 from websubsub.models import Subscription
 from websubsub.tasks import subscribe
 
-logger = logging.getLogger('websubsub.commands.websubscribe_static')
-
 
 class Command(BaseCommand):
     # TODO
     help = 'Materialize static subscriptions from settings'
 
     def handle(self, *args, **kwargs):
+        if not settings.WEBSUBS_HUBS:
+            print('settings.WEBSUBS_HUBS is empty')
+
         for hub_url, hub in settings.WEBSUBS_HUBS.items():
-            for topic, urlname in hub.get('subscriptions', []):
+            subscriptions = hub.get('subscriptions', [])
+            print(f'{len(subscriptions)} static subscriptions for hub {hub_url}')
+            for topic, urlname in subscriptions:
                 self.process_subscription(hub_url, topic, urlname)
+
 
     def process_subscription(self, hub_url, topic, urlname):
         try:
             ssn = Subscription.objects.get(topic=topic, hub_url=hub_url)
         except Subscription.DoesNotExist:
             Subscription.create(topic, urlname, hub_url)
-            logger.info(f'Static subscription {topic} is created and scheduled.')
+            print(f'Static subscription {topic} is created and scheduled.')
             return
 
         if ssn.unsubscribe_status is not None:
-            logger.info(f'Static subscription {topic} was explicitly unsubscribed, skipping.')
+            print(f'Static subscription {topic} was explicitly unsubscribed, skipping.')
             return
 
         if ssn.callback_urlname != urlname:
             if not ssn.callback_url:
                 # We did not subscribe with hub yet.
-                logger.info(f'Scheduling static subsctiption {topic}.')
+                print(f'Scheduling static subsctiption {topic}.')
                 ssn.update(callback_urlname=urlname)
                 subscribe.delay(pk=ssn.pk)
                 return
@@ -55,7 +58,7 @@ class Command(BaseCommand):
             if cur_resolved == urlname:
                 # Urlname was changed, while url pattern remain the same. It is fine
                 # to just change Subscription.callback_urlname
-                logger.info(f'Static subscription {ssn.pk}: changing urlname to {urlname}')
+                print(f'Static subscription {ssn.pk}: changing urlname to {urlname}')
                 ssn.update(callback_urlname=urlname)
             else:
                 # Urlname and pattern was changed, we should unsubscribe with hub,
@@ -71,9 +74,9 @@ class Command(BaseCommand):
 
         if ssn.subscribe_status not in ['verifying', 'verified']:
             # Let's schedule it
-            logger.info(f'Scheduling static subsctiption {topic}.')
+            print(f'Scheduling static subsctiption {topic}.')
             subscribe.delay(pk=ssn.pk)
             return
 
         # TODO: What will be a nice way to heal failed static subscriptions?
-        logger.info(f'Static subsctiption {topic} already exists, skipping.')
+        print(f'Static subsctiption {topic} already exists, skipping.')
