@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from os.path import join
+from urllib.parse import urljoin
 from uuid import uuid4
 
 from celery import shared_task
@@ -87,7 +87,8 @@ def subscribe(*, pk, urlname=None):
         return
 
     url = reverse(ssn.callback_urlname, args=[uuid4()])
-    ssn.callback_url = join(settings.SITE_URL, url)
+    ssn.callback_url = urljoin(settings.SITE_URL, url)
+    logger.debug(f'Subscription {ssn.pk} new callback url: {ssn.callback_url}')
 
     data = {
         'hub.mode': 'subscribe',
@@ -106,7 +107,7 @@ def subscribe(*, pk, urlname=None):
         logger.error(f'Subscription {ssn.pk} failed to connect to hub. Retries left: {left}')
         return
     else:
-        logger.debug('Got hub response')
+        logger.debug(f'Subscription {ssn.pk}, got hub response')
     finally:
         ssn.subscribe_attempt_time = now()
         ssn.save()
