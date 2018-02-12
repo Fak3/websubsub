@@ -48,7 +48,7 @@ Set the `SITE_URL` setting in your `settings.py` to the full url of your project
 `https://example.com`. It will be used to build full callback urls.
 
 Set `WEBSUBS_REDIS_URL` settings in your `settings.py`. Redis locks are used to ensure
-subscription\unsubscription tasks are consistent with hub and local database.
+subscription/unsubscription tasks are consistent with hub and local database.
 
 You can create subscription on the go, or use static subscriptions.
 

@@ -2,16 +2,13 @@ import io
 import os
 from os.path import join, dirname
 
-#import dpm
-
-
 from setuptools import setup, find_packages
 
-
-def read(*paths):
-    """Read a text file."""
-    fullpath = join(dirname(__file__), *paths)
-    return io.open(fullpath, encoding='utf-8').read().strip()
+try:
+    import pypandoc
+    description = pypandoc.convert('README.md', 'rst')
+except (IOError, ImportError):
+    description = open('README.md').read()
 
 
 INSTALL_REQUIRES = [
@@ -30,9 +27,9 @@ TESTS_REQUIRE = [
 
 setup(
     name='websubsub',
-    version='0.1',
+    version='0.3',
     description='Django websub subscriber',
-    long_description=read('README.md'),
+    long_description=description,
     author='Evstifeev Roman',
     author_email='someuniquename@gmail.com',
     url='https://github.com/Fak3/websubsub',
@@ -42,6 +39,7 @@ setup(
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
     extras_require={'develop': TESTS_REQUIRE},
+    python_requires='>=3.6',
     test_suite='nose.collector',
     classifiers = [
         'Development Status :: 4 - Beta',
