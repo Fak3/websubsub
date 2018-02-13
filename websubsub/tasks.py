@@ -113,6 +113,14 @@ def subscribe(*, pk, urlname=None):
         ssn.subscribe_attempt_time = now()
         ssn.save()
 
+    # If the hub URL supports WebSub and is able to handle the subscription or unsubscription
+    # request, it MUST respond to a subscription request with an HTTP 202 "Accepted" response
+    # to indicate that the request was received and will now be verified and validated by the
+    # hub.
+    # If a hub finds any errors in the subscription request, an appropriate HTTP error response
+    # code (4xx or 5xx) MUST be returned. In the event of an error, hubs SHOULD return a
+    # description of the error in the response body as plain text, used to assist the client
+    # developer in understanding the error. This is not meant to be shown to the end user.
     if rr.status_code != status.HTTP_202_ACCEPTED:
         # TODO: handle specific response codes accordingly
         ssn.subscribe_status = 'huberror'

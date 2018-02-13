@@ -1,7 +1,9 @@
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.utils.decorators import classonlymethod
+from django.utils.timezone import now
 from rest_framework.views import APIView  # TODO: can we live without drf dependency?
 from rest_framework.response import Response
 
@@ -82,6 +84,11 @@ class WssView(APIView):
             # TODO: should we ignore it?
 
         ssn.subscribe_status = 'verified'
+        ssn.lease_expiration_time = now() + timedelta(seconds=data['hub.lease_seconds'])
+        ssn.connerror_count = 0
+        ssn.huberror_count = 0
+        ssn.verifyerror_count = 0
+        ssn.verifytimeout_count = 0
         ssn.save()
         logger.info(f'Subscription {ssn.pk} verified')
         return Response(data['hub.challenge'])
