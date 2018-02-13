@@ -7,6 +7,8 @@ from django.utils.timezone import now
 from rest_framework.views import APIView  # TODO: can we live without drf dependency?
 from rest_framework.response import Response
 
+from .models import Subscription
+
 
 logger = logging.getLogger('websubsub.views')
 
