@@ -97,7 +97,7 @@ class WssView(APIView):
         # TODO
         return Response(data['hub.challenge'])
 
-    def on_denied(self, data):
+    def on_denied(self, ssn, data):
         """
         TODO
         If (and when), the subscription is denied, the hub MUST inform the subscriber by

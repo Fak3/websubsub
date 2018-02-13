@@ -25,9 +25,9 @@ def refresh_subscriptions():
     soon = now() + timedelta(days=1)  # TODO: setting
     _filter = Q(**{
         'lease_expiration_time__le': soon,
+        'subscribe_status': 'verified',
         'unsubscribe_status__isnull': True  # Exclude explicitly unsubscribed
     })
-    _filter &= ~Q(subscribe_status='denied')  # Exclude denied
     for ssn in Subscription.objects.filter(_filter):
         subscribe.delay(pk=ssn.pk)
 
