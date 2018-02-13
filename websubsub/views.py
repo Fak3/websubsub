@@ -40,9 +40,10 @@ class WssView(APIView):
     def get(self, request, *args, **kwargs):
         # TODO: check that hub.mode and hub.topic are in request data.
         try:
-            ssn = Subscription.objects.get(topic=data['hub.topic'])
+            ssn = Subscription.objects.get(topic=request.data['hub.topic'])
         except Subscription.DoesNotExist:
             ssn = None
+
         if request.data['hub.mode'] == 'subscribe':
             return self.on_subscribe(ssn, request.data)
         elif data['hub.mode'] == 'unsubscribe':
