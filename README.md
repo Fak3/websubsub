@@ -17,6 +17,28 @@ INSTALLED_APPS = [
 ]
 ```
 
+Set the `SITE_URL` setting in your `settings.py` to the full url of your project site, e.g.
+`https://example.com`. It will be used to build full callback urls.
+
+Set `WEBSUBS_REDIS_URL` settings in your `settings.py`. Redis locks are used to ensure
+subscription/unsubscription tasks are consistent with hub and local database.
+
+Add `websubsub.tasks.refresh_subscriptions` and `websubsub.tasks.retry_failed` to celerybeat
+schedule. If you define it in settings.py:
+
+```
+CELERY_BEAT_SCHEDULE = {
+    'websub_refresh': {
+        'task': 'websubsub.tasks.refresh_subscriptions',
+        'schedule': 3600  # Hourly
+    },
+    'websub_retry': {
+        'task': 'websubsub.tasks.retry_failed',
+        'schedule': 600  # Every 10 minutes
+    },
+}
+```
+
 ## Usage
 
 ### Create Websub callback
@@ -43,12 +65,6 @@ urlpatterns = [
 ```
 
 ### Subscribe
-
-Set the `SITE_URL` setting in your `settings.py` to the full url of your project site, e.g.
-`https://example.com`. It will be used to build full callback urls.
-
-Set `WEBSUBS_REDIS_URL` settings in your `settings.py`. Redis locks are used to ensure
-subscription/unsubscription tasks are consistent with hub and local database.
 
 You can create subscription on the go, or use static subscriptions.
 
