@@ -34,14 +34,19 @@ class WssView(APIView):
         return result
 
     def get(self, request):
+        # TODO: check that hub.mode and hub.topic are in request data.
+        try:
+            ssn = Subscription.objects.get(topic=data['hub.topic'])
+        except Subscription.DoesNotExist:
+            ssn = None
         if request.data['hub.mode'] == 'subscribe':
-            return self.on_subscribe(request.data)
+            return self.on_subscribe(ssn, request.data)
         elif data['hub.mode'] == 'unsubscribe':
-            return self.on_unsubscribe(request.data)
+            return self.on_unsubscribe(ssn, request.data)
         elif data['hub.mode'] == 'denied':
-            return self.on_denied(request.data)
+            return self.on_denied(ssn, request.data)
 
-    def on_subscribe(self, data):
+    def on_subscribe(self, ssn, data):
         """
         The subscriber MUST confirm that the hub.topic corresponds to a pending
         subscription or unsubscription that it wishes to carry out. If so, the
@@ -57,12 +62,13 @@ class WssView(APIView):
         Hubs MUST enforce lease expirations, and MUST NOT issue perpetual lease
         durations.
         """
-        try:
-            ssn = Subscription.objects.get(topic=data['hub.topic'])
-        except Subscription.DoesNotExist:
+        if 'hub.lease_seconds' not in data:
+            logger.error(f'Missing hub.lease_seconds in subscription verification {ssn.pk}!')
+            return Response('missing hub.lease_seconds', status=status.HTTP_400_BAD_REQUEST)
+
+        if not ssn:
             logger.error(
-                f'Received unwanted subscription verification request with'
-                f' topic {data["hub.topic"]}!')
+                f'Received unwanted subscription verification request with topic {data["hub.topic"]}!')
             return Response('unwanted subscription')
 
         if ssn.unsubscribe_status is not None:
@@ -80,13 +86,33 @@ class WssView(APIView):
         logger.info(f'Subscription {ssn.pk} verified')
         return Response(data['hub.challenge'])
 
-    def on_unsubscribe(self, data):
+    def on_unsubscribe(self, ssn, data):
         # TODO
         return Response(data['hub.challenge'])
 
     def on_denied(self, data):
-        # TODO
-        logging.error('Hub denied subscription!')
+        """
+        TODO
+        If (and when), the subscription is denied, the hub MUST inform the subscriber by
+        sending an HTTP GET request to the subscriber's callback URL as given in the
+        subscription request. This request has the following query string arguments appended:
+        hub.mode - REQUIRED. The literal string "denied".
+        hub.topic -REQUIRED. The topic URL given in the corresponding subscription request.
+        hub.reason -OPTIONAL. The hub may include a reason for which the subscription has been denied.
+
+        Hubs may provide an additional HTTP Location header to indicate that the subscriber may
+        retry subscribing to a different hub.topic. This allows for limited distribution to
+        specific groups or users in the context of social web applications.
+
+        The subscription MAY be denied by the hub at any point (even if it was previously accepted).
+        The Subscriber SHOULD then consider that the subscription is not possible anymore.
+        """
+        if not ssn:
+            logger.error(f'Received denial on unwanted subscription with topic {data["hub.topic"]}!')
+            return Response('unwanted subscription')
+
+        logger.error(f'Hub denied subscription {ssn.pk}!')
+        ssn.update(subscribe_status='denied')
         return Response('')
 
 

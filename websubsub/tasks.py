@@ -23,11 +23,12 @@ def refresh_subscriptions():
     This task should be scheduled to launch periodically
     """
     soon = now() + timedelta(days=1)  # TODO: setting
-    _filter = {
+    _filter = Q(**{
         'lease_expiration_time__le': soon,
         'unsubscribe_status__isnull': True  # Exclude explicitly unsubscribed
-    }
-    for ssn in Subscription.objects.filter(**_filter):
+    })
+    _filter &= ~Q(subscribe_status='denied')  # Exclude denied
+    for ssn in Subscription.objects.filter(_filter):
         subscribe.delay(pk=ssn.pk)
 
 
