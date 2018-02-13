@@ -4,6 +4,6 @@ from .models import Subscription
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'topic', 'callback_urlname')
+    list_display = ('pk', 'topic', 'subscribe_status', 'callback_urlname')
     list_filter = ('topic',)
 

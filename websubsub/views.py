@@ -35,7 +35,7 @@ class WssView(APIView):
         result.handler_task = handler_task
         return result
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         # TODO: check that hub.mode and hub.topic are in request data.
         try:
             ssn = Subscription.objects.get(topic=data['hub.topic'])
@@ -123,7 +123,7 @@ class WssView(APIView):
         return Response('')
 
 
-    def post(request):
+    def post(request, *args, **kwargs):
         """
         The subscriber's callback URL MUST return an HTTP 2xx response code to
         indicate a success. The subscriber's callback URL MAY return an HTTP 410
