@@ -24,7 +24,7 @@ def refresh_subscriptions():
     """
     soon = now() + timedelta(days=1)  # TODO: setting
     _filter = Q(**{
-        'lease_expiration_time__le': soon,
+        'lease_expiration_time__lt': soon,
         'subscribe_status': 'verified',
         'unsubscribe_status__isnull': True  # Exclude explicitly unsubscribed
     })
@@ -42,7 +42,7 @@ def retry_failed():
         'subscribe_attempt_time__lt': now() - waittime,
         'subscribe_status': 'verifying',
         # TODO: split this setting for error/timeout counters?
-        'verify_timeout_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
+        'verifytimeout_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
     })
     connerror = Q(**{
         'subscribe_status': 'connerror',
