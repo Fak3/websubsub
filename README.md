@@ -23,8 +23,13 @@ Set the `SITE_URL` setting in your `settings.py` to the full url of your project
 Set `WEBSUBS_REDIS_URL` settings in your `settings.py`. Redis locks are used to ensure
 subscription/unsubscription tasks are consistent with hub and local database.
 
+```
+SITE_URL = 'http://example.com'
+WEBSUBS_REDIS_URL = 'redis://redishost:6379'
+```
+
 Add `websubsub.tasks.refresh_subscriptions` and `websubsub.tasks.retry_failed` to celerybeat
-schedule. If you define it in settings.py:
+schedule. If you define it in `settings.py`:
 
 ```
 CELERY_BEAT_SCHEDULE = {
@@ -101,6 +106,15 @@ WEBSUBS_HUBS = {
 
 Execute `./manage.py websubscribe_static`
 
+### Unsubscribe
+
+To unsubscribe existing subscription, call `Subscription.unsubscribe()` method:
+
+```
+from websubsub.models import Subscription
+Subscription.objects.get(pk=4).unsubscribe()
+```
+
 ## Discovery
 
 Not implemented
@@ -119,4 +133,6 @@ Not implemented
 
 `WEBSUBS_MAX_VERIFY_RETRIES`
 
-`WEBSUBS_VERIFY_WAIT_TIME`
+`WEBSUBS_VERIFY_WAIT_TIME` - How many seconds should pass before unverified subscription is
+considered failed. After that time, `websubsub.tasks.retry_failed()` task will be able to retry
+subscription process again.
