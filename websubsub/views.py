@@ -2,10 +2,12 @@ import logging
 from datetime import timedelta
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils.decorators import classonlymethod
 from django.utils.timezone import now
 from rest_framework.views import APIView  # TODO: can we live without drf dependency?
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from .models import Subscription
 
@@ -38,20 +40,32 @@ class WssView(APIView):
         return result
 
     def get(self, request, *args, **kwargs):
-        # TODO: check that hub.mode and hub.topic are in request data.
+        """
+        Hub sends GET request to callback url to verify subscription/unsubscription or
+        to inform about subscription denial.
+        """
+        if 'hub.topic' not in request.GET:
+            logger.error(f'{request.path}: GET request is missing hub.topic')
+            return Response('missing hub.topic', status=HTTP_400_BAD_REQUEST)
+
+        mode = request.GET.get('hub.mode', None)
+        if mode not in ['subscribe', 'unsubscribe', 'denied']:
+            logger.error(f'{request.path}: GET request received unknown hub.mode "{mode}"')
+            return Response('unknown hub.mode', status=HTTP_400_BAD_REQUEST)
+
         try:
-            ssn = Subscription.objects.get(topic=request.data['hub.topic'])
+            ssn = Subscription.objects.get(topic=request.GET['hub.topic'])
         except Subscription.DoesNotExist:
             ssn = None
 
-        if request.data['hub.mode'] == 'subscribe':
-            return self.on_subscribe(ssn, request.data)
-        elif data['hub.mode'] == 'unsubscribe':
-            return self.on_unsubscribe(ssn, request.data)
-        elif data['hub.mode'] == 'denied':
-            return self.on_denied(ssn, request.data)
+        if mode == 'subscribe':
+            return self.on_subscribe(request, ssn)
+        elif mode == 'unsubscribe':
+            return self.on_unsubscribe(request, ssn)
+        elif mode == 'denied':
+            return self.on_denied(request, ssn)
 
-    def on_subscribe(self, ssn, data):
+    def on_subscribe(self, request, ssn):
         """
         The subscriber MUST confirm that the hub.topic corresponds to a pending
         subscription or unsubscription that it wishes to carry out. If so, the
@@ -67,14 +81,19 @@ class WssView(APIView):
         Hubs MUST enforce lease expirations, and MUST NOT issue perpetual lease
         durations.
         """
-        if 'hub.lease_seconds' not in data:
-            logger.error(f'Missing hub.lease_seconds in subscription verification {ssn.pk}!')
-            return Response('missing hub.lease_seconds', status=status.HTTP_400_BAD_REQUEST)
-
         if not ssn:
             logger.error(
-                f'Received unwanted subscription verification request with topic {data["hub.topic"]}!')
-            return Response('unwanted subscription')
+                f'Received unwanted subscription verification request with'
+                f' topic {request.GET["hub.topic"]}!')
+            return Response('unwanted subscription', status=HTTP_400_BAD_REQUEST)
+
+        if 'hub.challenge' not in request.GET:
+            logger.error(f'Missing hub.topic in subscription verification {ssn.pk}!')
+            return Response('missing hub.challenge', status=HTTP_400_BAD_REQUEST)
+
+        if not request.GET.get('hub.lease_seconds', '').isdigit():
+            logger.error(f'Missing integer hub.lease_seconds in subscription verification {ssn.pk}!')
+            return Response('hub.lease_seconds required and must be integer', status=HTTP_400_BAD_REQUEST)
 
         if ssn.unsubscribe_status is not None:
             logger.error(f'Subscription {ssn.pk} received subscription verification request,'
@@ -87,20 +106,20 @@ class WssView(APIView):
             # TODO: should we ignore it?
 
         ssn.subscribe_status = 'verified'
-        ssn.lease_expiration_time = now() + timedelta(seconds=data['hub.lease_seconds'])
+        ssn.lease_expiration_time = now() + timedelta(seconds=int(request.GET['hub.lease_seconds']))
         ssn.connerror_count = 0
         ssn.huberror_count = 0
         ssn.verifyerror_count = 0
         ssn.verifytimeout_count = 0
         ssn.save()
         logger.info(f'Subscription {ssn.pk} verified')
-        return Response(data['hub.challenge'])
+        return HttpResponse(request.GET['hub.challenge'])
 
-    def on_unsubscribe(self, ssn, data):
+    def on_unsubscribe(self, request, ssn):
         # TODO
-        return Response(data['hub.challenge'])
+        return HttpResponse(request.GET['hub.challenge'])
 
-    def on_denied(self, ssn, data):
+    def on_denied(self, request, ssn):
         """
         TODO
         If (and when), the subscription is denied, the hub MUST inform the subscriber by
@@ -118,7 +137,8 @@ class WssView(APIView):
         The Subscriber SHOULD then consider that the subscription is not possible anymore.
         """
         if not ssn:
-            logger.error(f'Received denial on unwanted subscription with topic {data["hub.topic"]}!')
+            logger.error(f'Received denial on unwanted subscription with '
+                         f'topic {request.GET["hub.topic"]}!')
             return Response('unwanted subscription')
 
         logger.error(f'Hub denied subscription {ssn.pk}!')
