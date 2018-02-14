@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.urls import reverse, Resolver404
 from django.utils.timezone import now
 from requests import post
+from requests.exceptions import ConnectionError
 from rest_framework import status
 
 from .lock import lock_or_exit, lock_wait
@@ -103,7 +104,10 @@ def subscribe(*, pk, urlname=None):
         ssn.connerror_count += 1
         ssn.subscribe_status = 'connerror'
         ssn.save()
-        logger.exception(e)
+        if isinstance(e, ConnectionError):
+            logger.error(str(e))
+        else:
+            logger.exception(e)
         left = max(0, settings.WEBSUBS_MAX_CONNECT_RETRIES - ssn.connerror_count)
         logger.error(f'Subscription {ssn.pk} failed to connect to hub. Retries left: {left}')
         return
