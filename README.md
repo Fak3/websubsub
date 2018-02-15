@@ -1,6 +1,7 @@
 # Websubsub
 
 [![Build Status](https://travis-ci.org/Fak3/websubsub.svg?branch=master)](https://travis-ci.org/Fak3/websubsub)
+[![codecov](https://codecov.io/gh/Fak3/websubsub/branch/master/graph/badge.svg)](https://codecov.io/gh/Fak3/websubsub)
 
 Django websub subscriber.
 
