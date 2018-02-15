@@ -136,3 +136,10 @@ Not implemented
 `WEBSUBS_VERIFY_WAIT_TIME` - How many seconds should pass before unverified subscription is
 considered failed. After that time, `websubsub.tasks.retry_failed()` task will be able to retry
 subscription process again.
+
+## Testing
+
+```
+pip install -r tests/requirements.txt
+py.test
+```
