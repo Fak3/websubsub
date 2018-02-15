@@ -46,12 +46,12 @@ class WssView(APIView):
         """
         if 'hub.topic' not in request.GET:
             logger.error(f'{request.path}: GET request is missing hub.topic')
-            return Response('missing hub.topic', status=HTTP_400_BAD_REQUEST)
+            return Response('Missing hub.topic', status=HTTP_400_BAD_REQUEST)
 
         mode = request.GET.get('hub.mode', None)
         if mode not in ['subscribe', 'unsubscribe', 'denied']:
             logger.error(f'{request.path}: GET request received unknown hub.mode "{mode}"')
-            return Response('unknown hub.mode', status=HTTP_400_BAD_REQUEST)
+            return Response('Missing or unknown hub.mode', status=HTTP_400_BAD_REQUEST)
 
         try:
             ssn = Subscription.objects.get(topic=request.GET['hub.topic'])
@@ -85,20 +85,26 @@ class WssView(APIView):
             logger.error(
                 f'Received unwanted subscription verification request with'
                 f' topic {request.GET["hub.topic"]}!')
-            return Response('unwanted subscription', status=HTTP_400_BAD_REQUEST)
+            return Response('Unwanted subscription', status=HTTP_400_BAD_REQUEST)
 
         if 'hub.challenge' not in request.GET:
             logger.error(f'Missing hub.topic in subscription verification {ssn.pk}!')
-            return Response('missing hub.challenge', status=HTTP_400_BAD_REQUEST)
+            ssn.subscribe_status = 'verifyerror'
+            ssn.verifyerror_count += 1
+            ssn.save()
+            return Response('Missing hub.challenge', status=HTTP_400_BAD_REQUEST)
 
         if not request.GET.get('hub.lease_seconds', '').isdigit():
             logger.error(f'Missing integer hub.lease_seconds in subscription verification {ssn.pk}!')
+            ssn.subscribe_status = 'verifyerror'
+            ssn.verifyerror_count += 1
+            ssn.save()
             return Response('hub.lease_seconds required and must be integer', status=HTTP_400_BAD_REQUEST)
 
         if ssn.unsubscribe_status is not None:
             logger.error(f'Subscription {ssn.pk} received subscription verification request,'
                          f' but its was explicitly unsubscribed before.')
-            return Response('unsubscribed')
+            return Response('Unsubscribed')
 
         if ssn.subscribe_status != 'verifying':
             logger.error(f'Subscription {ssn.pk} received subscription verification request,'
@@ -139,7 +145,7 @@ class WssView(APIView):
         if not ssn:
             logger.error(f'Received denial on unwanted subscription with '
                          f'topic {request.GET["hub.topic"]}!')
-            return Response('unwanted subscription')
+            return Response('Unwanted subscription')
 
         logger.error(f'Hub denied subscription {ssn.pk}!')
         ssn.update(subscribe_status='denied')

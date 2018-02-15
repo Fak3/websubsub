@@ -19,7 +19,7 @@ class Subscription(Model):
         ('connerror', 'connection error'),
         ('huberror', 'hub returned error'),
         ('verifying', 'waiting for hub verification request'),
-        ('verifyerror', 'verification failure'),
+        ('verifyerror', 'hub sent malformed verification request'),
         # 'verified' status merely means that we sent verification challenge
         # back to the hub. It does not mean that hub approved it and (un)subscribed
         # as was requested.
