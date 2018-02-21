@@ -56,7 +56,10 @@ class WssView(APIView):
         try:
             ssn = Subscription.objects.get(topic=request.GET['hub.topic'])
         except Subscription.DoesNotExist:
-            ssn = None
+            logger.error(
+                f'Received unwanted subscription "{mode}" request with'
+                f' topic {request.GET["hub.topic"]}!')
+            return Response('Unwanted subscription', status=HTTP_400_BAD_REQUEST)
 
         if mode == 'subscribe':
             return self.on_subscribe(request, ssn)
@@ -81,14 +84,8 @@ class WssView(APIView):
         Hubs MUST enforce lease expirations, and MUST NOT issue perpetual lease
         durations.
         """
-        if not ssn:
-            logger.error(
-                f'Received unwanted subscription verification request with'
-                f' topic {request.GET["hub.topic"]}!')
-            return Response('Unwanted subscription', status=HTTP_400_BAD_REQUEST)
-
         if 'hub.challenge' not in request.GET:
-            logger.error(f'Missing hub.topic in subscription verification {ssn.pk}!')
+            logger.error(f'Missing hub.challenge in subscription verification {ssn.pk}!')
             ssn.subscribe_status = 'verifyerror'
             ssn.verifyerror_count += 1
             ssn.save()
@@ -122,7 +119,25 @@ class WssView(APIView):
         return HttpResponse(request.GET['hub.challenge'])
 
     def on_unsubscribe(self, request, ssn):
-        # TODO
+        if 'hub.challenge' not in request.GET:
+            logger.error(f'Missing hub.challenge in unsubscription verification {ssn.pk}!')
+            ssn.unsubscribe_status = 'verifyerror'
+            ssn.verifyerror_count += 1
+            ssn.save()
+            return Response('Missing hub.challenge', status=HTTP_400_BAD_REQUEST)
+
+        if ssn.unsubscribe_status != 'verifying':
+            logger.error(f'Subscription {ssn.pk} received unsubscription verification request,'
+                         f' but its status is "{ssn.get_unsubscribe_status_display()}"')
+            # TODO: should we ignore it?
+
+        ssn.unsubscribe_status = 'verified'
+        ssn.connerror_count = 0
+        ssn.huberror_count = 0
+        ssn.verifyerror_count = 0
+        ssn.verifytimeout_count = 0
+        ssn.save()
+        logger.info(f'Unsubscribing {ssn.pk} verified')
         return HttpResponse(request.GET['hub.challenge'])
 
     def on_denied(self, request, ssn):
