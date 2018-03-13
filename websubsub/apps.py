@@ -42,7 +42,7 @@ class WebsubsubConfig(AppConfig):
 
         for name in self.required_settings:
             if not hasattr(settings, name):
-                raise ImproperlyConfigured(f'settings.{name} is required')
+                logger.warning(f'settings.{name} is required')
 
         for hub_url, hub in settings.WEBSUBS_HUBS.items():
             for topic, urlname in hub.get('subscriptions', []):
