@@ -15,6 +15,7 @@ INSTALL_REQUIRES = [
     'celery',
     'django',
     'django-rest-framework',  # TODO: can we live without drf dependency?
+    'dumblock',
     'redis',
     'requests',
 ]

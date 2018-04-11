@@ -18,7 +18,7 @@ class BaseTestCase(APITestCase):
         super()._pre_setup()
 
         responses.start()
-        patch('websubsub.lock.redis', mock_strict_redis_client()).start()
+        patch('dumblock.redis', mock_strict_redis_client()).start()
 
     def _post_teardown(self):
         """

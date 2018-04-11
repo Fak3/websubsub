@@ -8,11 +8,11 @@ from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse, Resolver404
 from django.utils.timezone import now
+from dumblock import lock_or_exit, lock_wait
 from requests import post
 from requests.exceptions import ConnectionError
 from rest_framework import status
 
-from .lock import lock_or_exit, lock_wait
 from .models import Subscription
 
 logger = logging.getLogger('websubsub.tasks')

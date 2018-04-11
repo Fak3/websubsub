@@ -18,7 +18,7 @@ class WebsubsubConfig(AppConfig):
     name = 'websubsub'
 
     required_settings = [
-        'WEBSUBS_REDIS_URL',
+        'DUMBLOCK_REDIS_URL',
         'SITE_URL'
     ]
     WEBSUBS_MAX_CONNECT_RETRIES = 2
