@@ -1,5 +1,5 @@
 django<2.1
-djangorestframework==3.7.7
+djangorestframework==3.9.1
 django-environ==0.4.4
 dumblock==0.1
 pytest==5.3.5
