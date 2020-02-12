@@ -9,7 +9,7 @@ pytest-pythonpath==0.7.2
 pytest-cov==2.5.1
 celery==4.1.0
 redis==2.10.6
-requests==2.18.4
+requests==2.20.0
 requests-toolbelt==0.8.0
 responses==0.8.1
 #raven==6.5.0
