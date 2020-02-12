@@ -36,7 +36,7 @@ class Command(BaseCommand):
         if ssn.callback_urlname != urlname:
             if not ssn.callback_url:
                 # We did not subscribe with hub yet.
-                print(f'Scheduling static subsctiption {topic}.')
+                print(f'Scheduling static subscription {topic}.')
                 ssn.update(callback_urlname=urlname)
                 subscribe.delay(pk=ssn.pk)
                 return
