@@ -54,9 +54,9 @@ DUMBLOCK_REDIS_URL = ''
 
 WEBSUBS_DEFAULT_HUB_URL = 'http://hub.io'
 
-WEBSUBS_HUBS = {
-    WEBSUBS_DEFAULT_HUB_URL: {
-        'subscriptions': [('news', 'wscallback'),]
-    }
-}
 
+REST_FRAMEWORK = {
+    ## 'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    'EXCEPTION_HANDLER': lambda *a: None,  # raise validation exceptions.
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
+} 
