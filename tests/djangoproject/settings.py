@@ -54,6 +54,33 @@ DUMBLOCK_REDIS_URL = ''
 
 WEBSUBS_DEFAULT_HUB_URL = 'http://hub.io'
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s [%(asctime)s] %(name)s %(module)s.py: %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'websubsub': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        }
+    },
+}
 
 REST_FRAMEWORK = {
     ## 'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',

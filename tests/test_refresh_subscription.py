@@ -1,9 +1,10 @@
 import re
+from datetime import timedelta
 
 import responses
 from django.test import override_settings
 from model_mommy.mommy import make
-from pendulum import now
+from django.utils.timezone import now
 from websubsub.models import Subscription
 from websubsub.tasks import refresh_subscriptions, retry_failed
 
@@ -24,7 +25,7 @@ class RefreshSubscriptionsTest(BaseTestCase):
             hub_url='http://hub.io',
             topic='news-topic1', 
             callback_urlname='wscallback',
-            lease_expiration_time=now().add(hours=3),
+            lease_expiration_time=now() + timedelta(hours=3),
             subscribe_status='verified'
         )
 
@@ -34,7 +35,7 @@ class RefreshSubscriptionsTest(BaseTestCase):
             hub_url='http://hub.io',
             topic='news-topic2', 
             callback_urlname='wscallback',
-            lease_expiration_time=now().add(hours=3),
+            lease_expiration_time=now() + timedelta(hours=3),
             subscribe_status='verified',
             unsubscribe_status='verified'
         )
@@ -44,7 +45,7 @@ class RefreshSubscriptionsTest(BaseTestCase):
             hub_url='http://hub.io',
             topic='news-topic3', 
             callback_urlname='wscallback',
-            lease_expiration_time=now().add(days=3),
+            lease_expiration_time=now() + timedelta(days=3),
             subscribe_status='verified'
         )
 
@@ -53,7 +54,7 @@ class RefreshSubscriptionsTest(BaseTestCase):
             hub_url='http://hub.io',
             topic='news-topic4', 
             callback_urlname='wscallback',
-            lease_expiration_time=now().add(hours=3),
+            lease_expiration_time=now() + timedelta(hours=3),
             subscribe_status='requesting'
         )
 
