@@ -1,13 +1,17 @@
-from django.db.models import (Model, CharField, IntegerField, TextField, DateTimeField)
+import logging
+from uuid import uuid4
+from django.db.models import (Model, CharField, IntegerField, TextField, DateTimeField, UUIDField)
 from django.conf import settings
+
+logger = logging.getLogger('websubsub.models')
 
 
 class Subscription(Model):
     class Meta:
-        # TODO: does it make sense to have several subscriptions with same topic?
-        # For now - no.
-        unique_together = ('hub_url', 'topic')
+        unique_together = ('hub_url', 'topic', 'callback_urlname')
 
+    id = UUIDField(primary_key=True, default=uuid4, editable=False)
+    time_created = DateTimeField(auto_now_add=True)
     hub_url = TextField()
     topic = TextField()
     callback_urlname = CharField(max_length=200)

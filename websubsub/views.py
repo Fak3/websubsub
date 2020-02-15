@@ -33,11 +33,12 @@ class WssView(APIView):
 
     """
 
+    handler_task = None
+        
     @classonlymethod
-    def as_view(cls, handler_task, *args, **kwargs):
-        result = super().as_view(*args, **kwargs)
-        result.handler_task = handler_task
-        return result
+    def as_view(cls, handler_task, **kwargs):
+        kwargs['handler_task'] = handler_task
+        return super().as_view(**kwargs)
 
     def get(self, request, *args, **kwargs):
         """
@@ -167,7 +168,7 @@ class WssView(APIView):
         return Response('')
 
 
-    def post(request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
         The subscriber's callback URL MUST return an HTTP 2xx response code to
         indicate a success. The subscriber's callback URL MAY return an HTTP 410
@@ -178,10 +179,6 @@ class WssView(APIView):
         success response code SHOULD only indicate receipt of the message, not
         acknowledgment that it was successfully processed by the subscriber.
         """
-        try:
-            self.handler_task.delay(request.data)
-        except:
-            pass
-        finally:
-            return Response('')  # TODO
+        self.handler_task.delay(request.data)
+        return Response('')  # TODO
 

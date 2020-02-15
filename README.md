@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Fak3/websubsub.svg?branch=master)](https://travis-ci.org/Fak3/websubsub)
 [![codecov](https://codecov.io/gh/Fak3/websubsub/branch/master/graph/badge.svg)](https://codecov.io/gh/Fak3/websubsub)
-![Support Python versions 3.6 and 3.7](https://img.shields.io/badge/python-3.6%2C%203.7-blue.svg)
+![Support Python versions 3.6, 3.7 and 3.8](https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8-blue.svg)
 [![pypi-version](https://img.shields.io/pypi/v/websubsub.svg)](https://pypi.python.org/pypi/websubsub)
 
 Django websub subscriber.
@@ -101,8 +101,7 @@ Add static subscriptions in your `settings.py`:
 WEBSUBS_HUBS = {
     'http://example.com': {
         'subscriptions': [
-            # (topic, urlname) pairs
-            ('mytopic', 'webnews'),
+            {'topic': 'mytopic', 'callback_urlname': 'webnews'},
             ...
         ]
     }
@@ -126,21 +125,35 @@ Not implemented
 
 ## Settings
 
-`SITE_URL` - ex.: `https://example.com`. Required. Will be used to build full callback urls.
+_SITE_URL_ - ex.: `https://example.com`. Required. Will be used to build full callback urls.
 
-`DUMBLOCK_REDIS_URL` - ex.: `redis://redishost:6379`. Required. Will be used to lock atomic tasks.
+_DUMBLOCK_REDIS_URL_ - ex.: `redis://redishost:6379`. Required. Will be used to lock atomic tasks.
 
-`WEBSUBS_DEFAULT_HUB_URL`
+_WEBSUBS_AUTOFIX_URLS_ - If `True`, then `websubsub.tasks.subscribe()` task will be allowed to ovewrite subscription.callback_url, resolving its callback_urlname. If False, it will print an error and exit. Default: `True`
 
-`WEBSUBS_MAX_CONNECT_RETRIES`
+_WEBSUBS_DEFAULT_HUB_URL_
 
-`WEBSUBS_MAX_HUB_ERROR_RETRIES`
+_WEBSUBS_MAX_CONNECT_RETRIES_
 
-`WEBSUBS_MAX_VERIFY_RETRIES`
+_WEBSUBS_MAX_HUB_ERROR_RETRIES_
 
-`WEBSUBS_VERIFY_WAIT_TIME` - How many seconds should pass before unverified subscription is
+_WEBSUBS_MAX_VERIFY_RETRIES_
+
+_WEBSUBS_VERIFY_WAIT_TIME_ - How many seconds should pass before unverified subscription is
 considered failed. After that time, `websubsub.tasks.retry_failed()` task will be able to retry
 subscription process again.
+
+## Management commands
+
+`./manage.py websubscribe_static` - Materialize static subscriptions from settings.
+
+`./manage.py websub_purge_unresolvable` - Delete all subscriptions with unresolvable urlname from database.
+
+`./manage.py websub_reset_counters` - Reset retry counters for all subscriptions in database.
+
+`./manage.py websub_handle_url_changes` - Guess changed urlnames for subscriptions from current callback_url. Also detect changed url patterns and schedule resubscribe with new url.
+
+`./manage.py dumpdata websubsub --indent 2` - Show all subscriptions.
 
 ## Testing
 

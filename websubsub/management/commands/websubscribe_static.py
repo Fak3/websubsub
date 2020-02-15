@@ -1,9 +1,13 @@
-
+import logging
+from django.apps import apps
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.urls import resolve, Resolver404
 
 from websubsub.models import Subscription
 from websubsub.tasks import subscribe
+
+log = logging.getLogger('websubsub')
 
 
 class Command(BaseCommand):
@@ -17,66 +21,39 @@ class Command(BaseCommand):
         for hub_url, hub in settings.WEBSUBS_HUBS.items():
             subscriptions = hub.get('subscriptions', [])
             print(f'{len(subscriptions)} static subscriptions for hub {hub_url}')
-            for topic, urlname in subscriptions:
-                self.process_subscription(hub_url, topic, urlname)
+            for subscription in subscriptions:
+                if isinstance(subscription, tuple):
+                    raise Exception(
+                        'Static subscription was changed from tuple to dict '
+                        '{"topic": topic, "callback_urlname": urlname} in Websubsub version 0.7'
+                    )
+                self.process_subscription(
+                    hub_url, 
+                    subscription['topic'], 
+                    subscription['callback_urlname']
+                )
+                
+        apps.get_app_config('websubsub').check_hub_url_slash_consistency()
+        apps.get_app_config('websubsub').check_urls_resolve()
 
 
     def process_subscription(self, hub_url, topic, urlname):
         try:
-            ssn = Subscription.objects.get(topic=topic, hub_url=hub_url)
+            ssn = Subscription.objects.get(topic=topic, hub_url=hub_url, callback_urlname=urlname)
         except Subscription.DoesNotExist:
-            Subscription.create(topic, urlname, hub_url)
-            print(f'Static subscription {topic} is created and scheduled.')
+            ssn = Subscription.create(topic, urlname, hub_url)
+            print(
+                f'New static subscription {ssn.pk} with topic {topic} and urlname '
+                f'{urlname} is created and scheduled.'
+            )
             return
 
         if ssn.unsubscribe_status is not None:
+            # TODO: graceful unsubscribe
             print(f'Static subscription {topic} was explicitly unsubscribed, skipping.')
             return
 
-        if ssn.callback_urlname != urlname:
-            if not ssn.callback_url:
-                # We did not subscribe with hub yet.
-                print(f'Scheduling static subscription {topic}.')
-                ssn.update(callback_urlname=urlname)
-                subscribe.delay(pk=ssn.pk)
-                return
-
-            # TODO We should probably check all subscription callback_urls in the
-            # same way on start.
-            try:
-                cur_resolved = resolve(ssn.callback_url).url_name
-            except Resolver404:
-                # Callback url does not resolve anymore. We can't gracefully tell hub
-                # to unsubscribe.
-                logger.error(
-                    f'Static subscription {ssn.pk} with topic "{topic}" has unresolvabe '
-                    f'callback url! Resubscribing with new urlname "{urlname}".')
-                ssn.update(callback_urlname=urlname)
-                subscribe.delay(pk=ssn.pk)
-                return
-
-            if cur_resolved == urlname:
-                # Urlname was changed, while url pattern remain the same. It is fine
-                # to just change Subscription.callback_urlname
-                print(f'Static subscription {ssn.pk}: changing urlname to {urlname}')
-                ssn.update(callback_urlname=urlname)
-            else:
-                # Urlname and pattern was changed, we should unsubscribe with hub,
-                # and then resubscribe
-                # TODO
-                logger.warning(
-                    f'Static subscription {topic} is subscribed to different callback'
-                    f' urlname, than specified in settings! Will resubscribe.')
-                ssn.callback_urlname = urlname
-                ssn.save()
-                subscribe.delay(pk=ssn.pk)
-                return
-
-        if ssn.subscribe_status not in ['verifying', 'verified']:
-            # Let's schedule it
-            print(f'Scheduling static subsctiption {topic}.')
-            subscribe.delay(pk=ssn.pk)
-            return
+        subscribe.delay(pk=ssn.pk)
+        print(f'Static subscription {ssn.id} with topic {topic} urlname {urlname} scheduled.')
 
         # TODO: What will be a nice way to heal failed static subscriptions?
-        print(f'Static subsctiption {topic} already exists, skipping.')
