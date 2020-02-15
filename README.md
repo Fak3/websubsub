@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Fak3/websubsub.svg?branch=master)](https://travis-ci.org/Fak3/websubsub)
 [![codecov](https://codecov.io/gh/Fak3/websubsub/branch/master/graph/badge.svg)](https://codecov.io/gh/Fak3/websubsub)
-![Support Python versions 3.6 and 3.7](https://img.shields.io/badge/python-3.6%2C%203.7-blue.svg)
+![Support Python versions 3.6, 3.7 and 3.8](https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8-blue.svg)
 [![pypi-version](https://img.shields.io/pypi/v/websubsub.svg)](https://pypi.python.org/pypi/websubsub)
 
 Django websub subscriber.
