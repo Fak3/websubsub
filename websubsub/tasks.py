@@ -6,7 +6,7 @@ from uuid import uuid4
 from celery import shared_task
 from django.conf import settings
 from django.db.models import Q
-from django.urls import reverse, Resolver404
+from django.urls import reverse
 from django.utils.timezone import now
 from dumblock import lock_or_exit, lock_wait
 from requests import post
@@ -29,7 +29,11 @@ def refresh_subscriptions():
         'subscribe_status': 'verified',
         'unsubscribe_status__isnull': True  # Exclude explicitly unsubscribed
     })
-    for ssn in Subscription.objects.filter(_filter):
+    
+    torefresh = Subscription.objects.filter(_filter)
+    if torefresh.exists():
+        logger.info(f'Refreshing {torefresh.count()} expiring subscriptions.')
+    for ssn in torefresh:
         subscribe.delay(pk=ssn.pk)
 
 
@@ -63,12 +67,27 @@ def retry_failed():
         'verifyerror_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
     })
 
+    max_reached = Subscription.objects.filter(**{
+        'subscribe_status': 'connerror',
+        'connerror_count__gte': settings.WEBSUBS_MAX_CONNECT_RETRIES,
+        'unsubscribe_status__isnull': True
+    })
+    if max_reached.exists():
+        for ssn in max_reached:
+            logger.warning(
+                f'Subscription {ssn.pk} with topic {ssn.topic} failed to connect '
+                f'to the hub at {ssn.hub_url} {settings.WEBSUBS_MAX_CONNECT_RETRIES} '
+                f'times. Increase settings.WEBSUBS_MAX_CONNECT_RETRIES to allow more '
+                f'attempts. Or reset retry counters with `./manage.py websub_reset_counters`.'
+            )
+            
     errors = verify_timeout | connerror | huberror | verifyerror
 
     # Exclude explicitly unsubscribed
-    _filter = errors & Q(unsubscribe_status__isnull=True)
+    tosubscribe = Subscription.objects.filter(errors & Q(unsubscribe_status__isnull=True))
 
-    for ssn in Subscription.objects.filter(_filter):
+    logger.debug(f'{tosubscribe.count()} subscriptions to subscribe.')
+    for ssn in tosubscribe:
         subscribe.delay(pk=ssn.pk)
 
     #------------------
@@ -95,8 +114,10 @@ def retry_failed():
     })
 
     errors = verify_timeout | connerror | huberror | verifyerror
-
-    for ssn in Subscription.objects.filter(errors):
+    
+    tounsubscribe = Subscription.objects.filter(errors)
+    logger.debug(f'{tounsubscribe.count()} subscriptions to unsubscribe.')
+    for ssn in tounsubscribe:
         unsubscribe.delay(pk=ssn.pk)
 
 
@@ -118,8 +139,19 @@ def subscribe(*, pk):
         )
         return
 
-    url = reverse(ssn.callback_urlname, args=[uuid4()])
-    ssn.callback_url = urljoin(settings.SITE_URL, url)
+    path = reverse(ssn.callback_urlname, args=[ssn.id])
+    fullurl = urljoin(settings.SITE_URL, path)
+    if ssn.callback_url \
+       and not ssn.callback_url == fullurl \
+       and not settings.WEBSUBS_AUTOFIX_URLS:
+        logger.error(
+            f'Will not change subscription {ssn.pk} callback url to {fullurl} . '
+            'Please set settings.WEBSUBS_AUTOFIX_URLS to True or Run '
+            '`manage.py websub_handle_url_changes`.'
+        )
+        return
+            
+    ssn.callback_url = fullurl
     logger.debug(f'Subscription {ssn.pk} new callback url: {ssn.callback_url}')
 
     data = {
@@ -139,7 +171,8 @@ def subscribe(*, pk):
         else:
             logger.exception(e)
         left = max(0, settings.WEBSUBS_MAX_CONNECT_RETRIES - ssn.connerror_count)
-        logger.error(f'Subscription {ssn.pk} failed to connect to hub. Retries left: {left}')
+        logger.error(f'Subscription {ssn.pk} failed to connect to hub '
+                     f'{ssn.hub_url}. Retries left: {left}')
         return
     else:
         logger.debug(f'Subscription {ssn.pk}, got hub response')
@@ -203,7 +236,7 @@ def unsubscribe(*, pk):
         else:
             logger.exception(e)
         left = max(0, settings.WEBSUBS_MAX_CONNECT_RETRIES - ssn.connerror_count)
-        logger.error(f'Subscription {ssn.pk} failed to connect to hub. Retries left: {left}')
+        logger.error(f'While unsubscribing {ssn.pk} failed to connect to hub. Retries left: {left}')
         return
     else:
         logger.debug(f'Subscription {ssn.pk}, got hub response')
