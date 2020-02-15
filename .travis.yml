@@ -4,6 +4,8 @@ os:
   - linux
 python:
   - 3.6
+  - 3.7
+  - 3.8
 sudo: false
 env:
   - TOXENV="py${PYTHON_VERSION//./}"
