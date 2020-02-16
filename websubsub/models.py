@@ -1,7 +1,11 @@
 import logging
+from urllib.parse import urljoin
 from uuid import uuid4
+
 from django.db.models import (Model, CharField, IntegerField, TextField, DateTimeField, UUIDField)
 from django.conf import settings
+from django.urls import reverse
+
 
 logger = logging.getLogger('websubsub.models')
 
@@ -12,6 +16,7 @@ class Subscription(Model):
 
     id = UUIDField(primary_key=True, default=uuid4, editable=False)
     time_created = DateTimeField(auto_now_add=True)
+    time_last_event_received = DateTimeField(null=True, blank=True)
     hub_url = TextField()
     topic = TextField()
     callback_urlname = CharField(max_length=200)
@@ -92,6 +97,12 @@ class Subscription(Model):
 
         return tasks.unsubscribe.delay(pk=self.pk)
 
+    def reverse_url(self):
+        return reverse(self.callback_urlname, args=(self.pk,))
+    
+    def reverse_fullurl(self):
+        return urljoin(settings.SITE_URL, self.reverse_url())
+    
     def update(self, **kwargs):
         """
         Use this method to update and save model instance in single call:
