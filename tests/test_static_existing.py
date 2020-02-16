@@ -49,6 +49,7 @@ class StaticSubscriptionExistingTest(BaseTestCase):
             # AND it should get new callback_urlname
             assert list(Subscription.objects.values()) == [{
                 'id': ssn.pk,
+                'static': True,
                 'callback_url': f'http://wss.io/websubcallback/{ssn.pk}',
                 'callback_urlname': 'wscallback',
                 'connerror_count': 0,
@@ -62,7 +63,8 @@ class StaticSubscriptionExistingTest(BaseTestCase):
                 'unsubscribe_attempt_time': None,
                 'unsubscribe_status': None,
                 'verifyerror_count': 0,
-                'verifytimeout_count': 0
+                'verifytimeout_count': 0,
+                'time_last_event_received': ANY
             }]
 
             # AND one POST request to hub should be sent

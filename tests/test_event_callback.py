@@ -9,6 +9,7 @@ from unittest.mock import patch, Mock, MagicMock
 from websubsub.views import WssView
 
 from .base import BaseTestCase, method_url_body
+from websubsub.models import Subscription
 
 
 urlpatterns = []
@@ -19,14 +20,15 @@ class EventCallbackTest(BaseTestCase):
     When hub sends POST request to callback, task should be called with request data.
     """
     def test_event(self):
-        # GIVEN WssView with websub handler task
+        # GIVEN Subscription
+        ssn = make(Subscription, callback_urlname='WEE')
+        
+        # AND WssView with websub handler task
         task = Mock()
-        urlpatterns.append(path('websubcallback/<uuid:id>', WssView.as_view(task)))
+        urlpatterns.append(path('websubcallback/<uuid:id>', WssView.as_view(task), name='WEE'))
         
         # WHEN hub posts json data to the callback
-        response = self.client.post(
-            '/websubcallback/472ee3ef-a10f-48f8-9da2-5400ed22a883', {'test': 'ok'}
-        )
+        response = self.client.post(ssn.reverse_fullurl(), {'test': 'ok'})
 
         # THEN response status_code should be 200 (ok)
         assert response.status_code == 200

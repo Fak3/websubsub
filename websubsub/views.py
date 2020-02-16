@@ -54,12 +54,14 @@ class WssView(APIView):
             logger.error(f'{request.path}: GET request received unknown hub.mode "{mode}"')
             return Response('Missing or unknown hub.mode', status=HTTP_400_BAD_REQUEST)
 
+        id = args[0] if args else list(kwargs.values())[0]
         try:
-            ssn = Subscription.objects.get(topic=request.GET['hub.topic'])
+            ssn = Subscription.objects.get(id=id)
         except Subscription.DoesNotExist:
             logger.error(
-                f'Received unwanted subscription "{mode}" request with'
-                f' topic {request.GET["hub.topic"]}!')
+                f'Received unwanted subscription {id} "{mode}" request with'
+                f' topic {request.GET["hub.topic"]} !'
+            )
             return Response('Unwanted subscription', status=HTTP_400_BAD_REQUEST)
 
         if mode == 'subscribe':
@@ -179,6 +181,15 @@ class WssView(APIView):
         success response code SHOULD only indicate receipt of the message, not
         acknowledgment that it was successfully processed by the subscriber.
         """
+        
+        id = args[0] if args else list(kwargs.values())[0]
+        try:
+            ssn = Subscription.objects.get(id=id)
+        except Subscription.DoesNotExist:
+            logger.error(f'Received unwanted subscription {id} POST request!')
+            return Response('Unwanted subscription', status=410)
+        
+        ssn.update(time_last_event_received=now())
         self.handler_task.delay(request.data)
         return Response('')  # TODO
 

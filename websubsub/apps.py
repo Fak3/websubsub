@@ -1,12 +1,11 @@
 import logging
 import sys
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
 from django.apps import AppConfig
 from django.conf import settings
 from django.urls import reverse, resolve, Resolver404, NoReverseMatch
-
 
 
 logger = logging.getLogger('websubsub.apps')
@@ -81,7 +80,7 @@ class WebsubsubConfig(AppConfig):
             if hub + '/' in with_slash:
                 doubles.add(hub)
         if doubles:
-            logger.warning(
+            logger.error(
                 f'Following hub urls are used inconsistently with and '
                 f'without trailing slash: {doubles}'
             )
@@ -89,7 +88,7 @@ class WebsubsubConfig(AppConfig):
     def check_urls_resolve(self):
         from .models import Subscription
         
-        # Check if all existing subscriptions urlnames properly resolve to urls.
+        # Check if all existing subscriptions urlnames properly reverse to urls.
         unreversable_count = 0
         for ssn in Subscription.objects.all():
             try:
@@ -122,7 +121,7 @@ class WebsubsubConfig(AppConfig):
         unresolvabe_count = 0
         for ssn in Subscription.objects.filter(subscribe_status='verified').exclude(pk__in=rebased):
             try:
-                ssn_resolved_urlname = resolve(ssn.callback_url).url_name
+                resolve(urlparse(ssn.callback_url).path).url_name
             except Resolver404:
                 unresolvabe_count += 1
                 

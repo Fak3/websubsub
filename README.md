@@ -149,6 +149,8 @@ subscription process again.
 
 `./manage.py websub_purge_unresolvable` - Delete all subscriptions with unresolvable urlname from database.
 
+`./manage.py websub_purge_all` - Delete all subscriptions from database.
+
 `./manage.py websub_reset_counters` - Reset retry counters for all subscriptions in database.
 
 `./manage.py websub_handle_url_changes` - Guess changed urlnames for subscriptions from current callback_url. Also detect changed url patterns and schedule resubscribe with new url.

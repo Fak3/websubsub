@@ -30,8 +30,8 @@ def subscribe(*, pk):
     waittime = timedelta(seconds=settings.WEBSUBS_VERIFY_WAIT_TIME)
     if ssn.subscribe_status == 'verifying' \
        and now() < ssn.subscribe_attempt_time + waittime:
-        logger.warning(
-            f'Subscription {ssn.pk} was attempted to subscribe recently and'
+        logger.info(
+            f'Subscription {ssn.pk} was attempted to subscribe recently and '
             f'waiting for verification. Skipping.'
         )
         return

@@ -69,7 +69,7 @@ def retry_failed():
     # Exclude explicitly unsubscribed
     tosubscribe = Subscription.objects.filter(errors & Q(unsubscribe_status__isnull=True))
 
-    logger.debug(f'{tosubscribe.count()} subscriptions to subscribe.')
+    logger.debug(f'{tosubscribe.count()} subscriptions to retry subscribe.')
     for ssn in tosubscribe:
         subscribe.delay(pk=ssn.pk)
 
@@ -99,7 +99,7 @@ def retry_failed():
     errors = verify_timeout | connerror | huberror | verifyerror
     
     tounsubscribe = Subscription.objects.filter(errors)
-    logger.debug(f'{tounsubscribe.count()} subscriptions to unsubscribe.')
+    logger.debug(f'{tounsubscribe.count()} subscriptions to retry unsubscribe.')
     for ssn in tounsubscribe:
         unsubscribe.delay(pk=ssn.pk)
 

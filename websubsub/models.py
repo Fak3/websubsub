@@ -2,7 +2,9 @@ import logging
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from django.db.models import (Model, CharField, IntegerField, TextField, DateTimeField, UUIDField)
+from django.db.models import (
+    Model, CharField, IntegerField, TextField, DateTimeField, UUIDField, BooleanField
+)
 from django.conf import settings
 from django.urls import reverse
 
@@ -22,6 +24,7 @@ class Subscription(Model):
     callback_urlname = CharField(max_length=200)
     callback_url = TextField(null=True)  # Generated on subscribe
     lease_expiration_time = DateTimeField(null=True, blank=True)
+    static = BooleanField(default=False, editable=False)
 
     STATUS = [
         ('requesting', 'scheduled to be requested asap'),
@@ -48,7 +51,7 @@ class Subscription(Model):
     unsubscribe_attempt_time = DateTimeField(null=True, blank=True)
 
     @classmethod
-    def create(cls, topic, urlname, hub=None):
+    def create(cls, topic, urlname, hub=None, static=False):
         from . import tasks
         if not hub and not settings.WEBSUBS_DEFAULT_HUB_URL:
             raise Exception('Provide hub or set WEBSUBS_DEFAULT_HUB_URL setting.')
@@ -57,6 +60,7 @@ class Subscription(Model):
             topic=topic,
             callback_urlname=urlname,
             hub_url=hub or settings.WEBSUBS_DEFAULT_HUB_URL,
+            static=static
         )
         ssn._subscriberesult = tasks.subscribe.delay(pk=ssn.pk)
         return ssn

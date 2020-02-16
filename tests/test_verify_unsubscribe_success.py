@@ -12,17 +12,15 @@ class VeirfyUnsubscribeSuccessTest(BaseTestCase):
     When valid verification request from hub received, subscription should be marked 'verified'.
     """
     def test_success(self):
-        callback = '/websubcallback/8b1396c9-9c14-4cd7-9496-99f73742f948'
-
         # GIVEN Subscription with unsubscribe status 'verifying'
-        make(Subscription,
-            callback_url=f'http://wss.io{callback}',
+        ssn = make(Subscription,
+            callback_urlname='wscallback',
             topic='news',
             unsubscribe_status='verifying'
         )
 
         # WHEN hub sends valid verification request
-        rr = self.client.get(callback, {
+        rr = self.client.get(ssn.reverse_fullurl(), {
             'hub.topic': 'news',
             'hub.challenge': '123',
             'hub.mode': 'unsubscribe'})
