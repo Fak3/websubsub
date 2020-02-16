@@ -3,8 +3,8 @@ from datetime import timedelta
 
 import responses
 from django.test import override_settings
-from model_mommy.mommy import make
 from django.utils.timezone import now
+from model_mommy.mommy import make
 from websubsub.models import Subscription
 from websubsub.tasks import refresh_subscriptions, retry_failed
 

@@ -1,7 +1,13 @@
 import logging
+from urllib.parse import urljoin
 from uuid import uuid4
-from django.db.models import (Model, CharField, IntegerField, TextField, DateTimeField, UUIDField)
+
+from django.db.models import (
+    Model, CharField, IntegerField, TextField, DateTimeField, UUIDField, BooleanField
+)
 from django.conf import settings
+from django.urls import reverse
+
 
 logger = logging.getLogger('websubsub.models')
 
@@ -12,11 +18,13 @@ class Subscription(Model):
 
     id = UUIDField(primary_key=True, default=uuid4, editable=False)
     time_created = DateTimeField(auto_now_add=True)
+    time_last_event_received = DateTimeField(null=True, blank=True)
     hub_url = TextField()
     topic = TextField()
     callback_urlname = CharField(max_length=200)
     callback_url = TextField(null=True)  # Generated on subscribe
     lease_expiration_time = DateTimeField(null=True, blank=True)
+    static = BooleanField(default=False, editable=False)
 
     STATUS = [
         ('requesting', 'scheduled to be requested asap'),
@@ -43,7 +51,7 @@ class Subscription(Model):
     unsubscribe_attempt_time = DateTimeField(null=True, blank=True)
 
     @classmethod
-    def create(cls, topic, urlname, hub=None):
+    def create(cls, topic, urlname, hub=None, static=False):
         from . import tasks
         if not hub and not settings.WEBSUBS_DEFAULT_HUB_URL:
             raise Exception('Provide hub or set WEBSUBS_DEFAULT_HUB_URL setting.')
@@ -52,6 +60,7 @@ class Subscription(Model):
             topic=topic,
             callback_urlname=urlname,
             hub_url=hub or settings.WEBSUBS_DEFAULT_HUB_URL,
+            static=static
         )
         ssn._subscriberesult = tasks.subscribe.delay(pk=ssn.pk)
         return ssn
@@ -92,6 +101,12 @@ class Subscription(Model):
 
         return tasks.unsubscribe.delay(pk=self.pk)
 
+    def reverse_url(self):
+        return reverse(self.callback_urlname, args=(self.pk,))
+    
+    def reverse_fullurl(self):
+        return urljoin(settings.SITE_URL, self.reverse_url())
+    
     def update(self, **kwargs):
         """
         Use this method to update and save model instance in single call:

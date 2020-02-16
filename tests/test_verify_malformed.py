@@ -12,11 +12,9 @@ class VeirfyMalformedTest(BaseTestCase):
     When malformed verification request from hub received, subscription status should be `verifyerror`
     """
     def setUp(self):
-        self.callback = '/websubcallback/8b1396c9-9c14-4cd7-9496-99f73742f948'
-
         # GIVEN Subscription with status 'verifying'
-        make(Subscription,
-            callback_url=f'http://wss.io{self.callback}',
+        self.ssn = make(Subscription,
+            callback_urlname='wscallback',
             topic='news',
             subscribe_status='verifying',
             verifyerror_count=0,
@@ -24,7 +22,7 @@ class VeirfyMalformedTest(BaseTestCase):
 
     def test_no_challenge(self):
         # WHEN hub sends subscription verification request without `hub.challenge`
-        rr = self.client.get(self.callback, {
+        rr = self.client.get(self.ssn.reverse_fullurl(), {
             'hub.topic': 'news',
             'hub.lease_seconds': 100,
             'hub.mode': 'subscribe'})
@@ -47,7 +45,7 @@ class VeirfyMalformedTest(BaseTestCase):
 
     def test_no_lease(self):
         # WHEN hub sends subscription verification request without `hub.lease_seconds`
-        rr = self.client.get(self.callback, {
+        rr = self.client.get(self.ssn.reverse_fullurl(), {
             'hub.topic': 'news',
             'hub.challenge': '123',
             'hub.mode': 'subscribe'})
@@ -70,7 +68,7 @@ class VeirfyMalformedTest(BaseTestCase):
 
     def test_invalid_lease(self):
         # WHEN hub sends subscription verification request with invalid `hub.lease_seconds`
-        rr = self.client.get(self.callback, {
+        rr = self.client.get(self.ssn.reverse_fullurl(), {
             'hub.topic': 'news',
             'hub.lease_seconds': 'QWE!!!!!!!!!',
             'hub.challenge': '123',
