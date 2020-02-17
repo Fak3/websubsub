@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 )
                 current.append(ssn.pk)
                 
-        for ssn in Subscription.objects.filter(static=False).exclude(pk__in=current):
+        for ssn in Subscription.objects.filter(static=True).exclude(pk__in=current):
             print(
                 f'\nFound old static subscription {ssn.pk} in database: \n'
                 f'  hub: {ssn.hub_url}\n'
