@@ -28,7 +28,7 @@ TESTS_REQUIRE = [
 
 setup(
     name='websubsub',
-    version='0.8',
+    version='0.9.1',
     description='Django websub subscriber',
     long_description=description,
     author='Evstifeev Roman',
