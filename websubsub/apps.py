@@ -31,8 +31,6 @@ class WebsubsubConfig(AppConfig):
     WEBSUBS_AUTOFIX_URLS = True
 
     def ready(self):
-        self.configure()
-
         argv = ' '.join(sys.argv)
         if 'test' in argv or 'pytest' in argv or 'py.test' in argv:
             return
@@ -41,11 +39,13 @@ class WebsubsubConfig(AppConfig):
             # websubscribe_static calls checks by itself after it is finished.
             return
         
-        if 'makemigrations' in argv or 'migrate' in argv:
+        if 'makemigrations' in argv or 'migrate' in argv or 'collectstatic' in argv:
             return
             
-        self.check_hub_url_slash_consistency()
-        self.check_urls_resolve()
+        if 'runserver' in argv or 'wsgi' in argv or 'asgi' in argv or 'websub_' in argv:
+            self.configure()
+            self.check_hub_url_slash_consistency()
+            self.check_urls_resolve()
 
     def configure(self):
         # Initialize settings with default values.
