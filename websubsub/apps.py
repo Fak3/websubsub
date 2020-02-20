@@ -31,6 +31,11 @@ class WebsubsubConfig(AppConfig):
     WEBSUBS_AUTOFIX_URLS = True
 
     def ready(self):
+        # Initialize settings with default values.
+        for name in dir(self):
+            if name.isupper() and not hasattr(settings, name):
+                setattr(settings, name, getattr(self, name))
+                
         argv = ' '.join(sys.argv)
         if 'test' in argv or 'pytest' in argv or 'py.test' in argv:
             return
@@ -48,11 +53,6 @@ class WebsubsubConfig(AppConfig):
             self.check_urls_resolve()
 
     def configure(self):
-        # Initialize settings with default values.
-        for name in dir(self):
-            if name.isupper() and not hasattr(settings, name):
-                setattr(settings, name, getattr(self, name))
-
         # Check if required settings are defined.
         for name in self.required_settings:
             if not hasattr(settings, name):
