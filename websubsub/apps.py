@@ -48,16 +48,19 @@ class WebsubsubConfig(AppConfig):
             return
             
         if 'runserver' in argv or 'wsgi' in argv or 'asgi' in argv or 'websub_' in argv:
-            self.configure()
+            self.check_required_settings()
+            self.check_static_subscriptions()
             self.check_hub_url_slash_consistency()
             self.check_urls_resolve()
 
-    def configure(self):
+    def check_required_settings(self):
         # Check if required settings are defined.
         for name in self.required_settings:
             if not hasattr(settings, name):
                 logger.warning(f'settings.{name} is required')
 
+
+    def check_static_subscriptions(self):
         # Check if all static subscriptions urlnames properly resolve to urls.
         for hub_url, hub in settings.WEBSUBS_HUBS.items():
             for subscription in hub.get('subscriptions', []):
