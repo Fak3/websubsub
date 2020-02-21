@@ -17,9 +17,9 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
 
         Subscription.objects.update(
-            connerror_count = 0
-            huberror_count = 0
-            verifytimeout_count = 0
+            connerror_count = 0,
+            huberror_count = 0,
+            verifytimeout_count = 0,
             verifyerror_count = 0
         )
         print(
