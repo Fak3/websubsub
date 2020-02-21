@@ -154,6 +154,7 @@ class Command(BaseCommand):
                 f'{ssn.callback_url}, but now this urlname resolves to {newurl}. '
                 f'Scheduling to resubscribe with new callback_url.'
             )
+            ssn.update(subscribe_status='requesting')
             subscribe.delay(pk=ssn.pk)
             return ssn
         
@@ -164,6 +165,7 @@ class Command(BaseCommand):
             )
             return ssn
             
+        ssn.update(subscribe_status='requesting')
         subscribe.delay(pk=ssn.pk)
         print(
             f'Static subscription {ssn.pk} with \n'
@@ -187,8 +189,8 @@ class Command(BaseCommand):
             )
             
             if kwargs['yes']:
-                ssn.delete()
                 print(f'Subscription {ssn.pk} deleted.')
+                ssn.delete()
                 continue
             
             while True:
@@ -196,7 +198,7 @@ class Command(BaseCommand):
                 if not answer or answer in ('n','N'):
                     break
                 if answer in ('y', 'Y'):
-                    ssn.delete()
                     print(f'Subscription {ssn.pk} deleted.')
+                    ssn.delete()
                     break
 
