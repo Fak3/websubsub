@@ -10,11 +10,11 @@ from unittest.mock import ANY
 from .base import BaseTestCase, method_url_body
 
 
-@override_settings(WEBSUBS_AUTOFIX_URLS=True)
+@override_settings(WEBSUBSUB_AUTOFIX_URLS=True)
 class StaticSubscriptionExistingTest(BaseTestCase):
     """
     When declared static subscription already exists in database, calling 
-    `./manage.py websubscribe_static` should trigger request to hub, and 
+    `./manage.py websub_static_subscribe` should trigger request to hub, and 
     then mark Subscription as `verifying`.
     """
     def test_static_existing(self):
@@ -31,7 +31,7 @@ class StaticSubscriptionExistingTest(BaseTestCase):
         
         # GIVEN settings with static subscription to the same hub,
         # topic, and urlname
-        NEW_WEBSUBS_HUBS = {
+        NEW_WEBSUBSUB_HUBS = {
             'http://hub.io/': {
                 'subscriptions': [{
                     'topic': 'news', 
@@ -39,9 +39,9 @@ class StaticSubscriptionExistingTest(BaseTestCase):
                 }]
             }
         }
-        with self.settings(WEBSUBS_HUBS = NEW_WEBSUBS_HUBS):
-            # WHEN websubscribe_static is called
-            management.call_command('websubscribe_static')
+        with self.settings(WEBSUBSUB_HUBS = NEW_WEBSUBSUB_HUBS):
+            # WHEN websub_static_subscribe is called
+            management.call_command('websub_static_subscribe')
             
             # THEN exactly one Subscription should exist in database
             assert len(Subscription.objects.all()) == 1

@@ -145,7 +145,12 @@ subscription process again.
 
 ## Management commands
 
-`./manage.py websubscribe_static` - Materialize static subscriptions from settings.
+`./manage.py websub_static_subscribe` - Materialize static subscriptions from settings. Optional arguments:
+
+* `--purge-orphans` - delete old static subscriptions from database
+* `-y`, `--yes` - answer yes to all
+* `--reset-counters` - reset retry counters
+* `--force` - send new subscription request to hub even if already subscribed or explicitly unsubscribed
 
 `./manage.py websub_purge_unresolvable` - Delete all subscriptions with unresolvable urlname from database.
 
