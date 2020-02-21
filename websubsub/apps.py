@@ -22,13 +22,13 @@ class WebsubsubConfig(AppConfig):
         'DUMBLOCK_REDIS_URL',
         'SITE_URL'
     ]
-    WEBSUBS_MAX_CONNECT_RETRIES = 2
-    WEBSUBS_MAX_HUB_ERROR_RETRIES = 2
-    WEBSUBS_MAX_VERIFY_RETRIES = 2
-    WEBSUBS_VERIFY_WAIT_TIME = 60  # seconds
-    WEBSUBS_HUBS = {}
-    WEBSUBS_DEFAULT_HUB_URL = None
-    WEBSUBS_AUTOFIX_URLS = True
+    WEBSUBSUB_MAX_CONNECT_RETRIES = 2
+    WEBSUBSUB_MAX_HUB_ERROR_RETRIES = 2
+    WEBSUBSUB_MAX_VERIFY_RETRIES = 2
+    WEBSUBSUB_VERIFY_WAIT_TIME = 60  # seconds
+    WEBSUBSUB_HUBS = {}
+    WEBSUBSUB_DEFAULT_HUB_URL = None
+    WEBSUBSUB_AUTOFIX_URLS = True
 
     def ready(self):
         # Initialize settings with default values.
@@ -62,7 +62,7 @@ class WebsubsubConfig(AppConfig):
 
     def check_static_subscriptions(self):
         # Check if all static subscriptions urlnames properly resolve to urls.
-        for hub_url, hub in settings.WEBSUBS_HUBS.items():
+        for hub_url, hub in settings.WEBSUBSUB_HUBS.items():
             for subscription in hub.get('subscriptions', []):
                 try:
                     reverse(subscription['callback_urlname'], args=[uuid4()])

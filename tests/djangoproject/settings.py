@@ -52,7 +52,7 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 SITE_URL = 'http://wss.io'
 DUMBLOCK_REDIS_URL = ''
 
-WEBSUBS_DEFAULT_HUB_URL = 'http://hub.io'
+WEBSUBSUB_DEFAULT_HUB_URL = 'http://hub.io'
 
 LOGGING = {
     'version': 1,

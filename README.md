@@ -98,7 +98,7 @@ with management command `./manage.py websubscribe_static`.
 Add static subscriptions in your `settings.py`:
 
 ```
-WEBSUBS_HUBS = {
+WEBSUBSUB_HUBS = {
     'http://example.com': {
         'subscriptions': [
             {'topic': 'mytopic', 'callback_urlname': 'webnews'},
@@ -129,17 +129,17 @@ _SITE_URL_ - ex.: `https://example.com`. Required. Will be used to build full ca
 
 _DUMBLOCK_REDIS_URL_ - ex.: `redis://redishost:6379`. Required. Will be used to lock atomic tasks.
 
-_WEBSUBS_AUTOFIX_URLS_ - If `True`, then `websubsub.tasks.subscribe()` task will be allowed to ovewrite subscription.callback_url, resolving its callback_urlname. If False, it will print an error and exit. Default: `True`
+_WEBSUBSUB_AUTOFIX_URLS_ - If `True`, then `websubsub.tasks.subscribe()` task will be allowed to ovewrite subscription.callback_url, resolving its callback_urlname. If False, it will print an error and exit. Default: `True`
 
-_WEBSUBS_DEFAULT_HUB_URL_
+_WEBSUBSUB_DEFAULT_HUB_URL_
 
-_WEBSUBS_MAX_CONNECT_RETRIES_
+_WEBSUBSUB_MAX_CONNECT_RETRIES_
 
-_WEBSUBS_MAX_HUB_ERROR_RETRIES_
+_WEBSUBSUB_MAX_HUB_ERROR_RETRIES_
 
-_WEBSUBS_MAX_VERIFY_RETRIES_
+_WEBSUBSUB_MAX_VERIFY_RETRIES_
 
-_WEBSUBS_VERIFY_WAIT_TIME_ - How many seconds should pass before unverified subscription is
+_WEBSUBSUB_VERIFY_WAIT_TIME_ - How many seconds should pass before unverified subscription is
 considered failed. After that time, `websubsub.tasks.retry_failed()` task will be able to retry
 subscription process again.
 

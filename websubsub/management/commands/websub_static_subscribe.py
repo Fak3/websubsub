@@ -112,7 +112,9 @@ class Command(BaseCommand):
                 connerror_count = 0,
                 huberror_count = 0,
                 verifytimeout_count = 0,
-                verifyerror_count = 0
+                verifyerror_count = 0,
+                subscribe_attempt_time = None,
+                unsubscribe_attempt_time = None
             )
             
         if ssn.unsubscribe_status is not None:
@@ -130,7 +132,9 @@ class Command(BaseCommand):
                         connerror_count = 0,
                         huberror_count = 0,
                         verifytimeout_count = 0,
-                        verifyerror_count = 0
+                        verifyerror_count = 0,
+                        subscribe_attempt_time = None,
+                        unsubscribe_attempt_time = None
                     )
                 subscribe.delay(pk=ssn.pk)
             else:

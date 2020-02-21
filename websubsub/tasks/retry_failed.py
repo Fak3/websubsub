@@ -25,7 +25,7 @@ def retry_failed():
     """
     This task should be scheduled to launch periodically
     """
-    waittime = timedelta(seconds=settings.WEBSUBS_VERIFY_WAIT_TIME)
+    waittime = timedelta(seconds=settings.WEBSUBSUB_VERIFY_WAIT_TIME)
 
     #-----------------
     # Subscribe errors
@@ -34,33 +34,33 @@ def retry_failed():
         'subscribe_attempt_time__lt': now() - waittime,
         'subscribe_status': 'verifying',
         # TODO: split this setting for error/timeout counters?
-        'verifytimeout_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
+        'verifytimeout_count__lt': settings.WEBSUBSUB_MAX_VERIFY_RETRIES
     })
     connerror = Q(**{
         'subscribe_status': 'connerror',
-        'connerror_count__lt': settings.WEBSUBS_MAX_CONNECT_RETRIES
+        'connerror_count__lt': settings.WEBSUBSUB_MAX_CONNECT_RETRIES
     })
     huberror = Q(**{
         'subscribe_status': 'huberror',
-        'huberror_count__lt': settings.WEBSUBS_MAX_HUB_ERROR_RETRIES
+        'huberror_count__lt': settings.WEBSUBSUB_MAX_HUB_ERROR_RETRIES
     })
     verifyerror = Q(**{
         'subscribe_status': 'verifyerror',
         # TODO: split this setting for error/timeout counters?
-        'verifyerror_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
+        'verifyerror_count__lt': settings.WEBSUBSUB_MAX_VERIFY_RETRIES
     })
 
     max_reached = Subscription.objects.filter(**{
         'subscribe_status': 'connerror',
-        'connerror_count__gte': settings.WEBSUBS_MAX_CONNECT_RETRIES,
+        'connerror_count__gte': settings.WEBSUBSUB_MAX_CONNECT_RETRIES,
         'unsubscribe_status__isnull': True
     })
     if max_reached.exists():
         for ssn in max_reached:
             logger.warning(
                 f'Subscription {ssn.pk} with topic {ssn.topic} failed to connect '
-                f'to the hub at {ssn.hub_url} {settings.WEBSUBS_MAX_CONNECT_RETRIES} '
-                f'times. Increase settings.WEBSUBS_MAX_CONNECT_RETRIES to allow more '
+                f'to the hub at {ssn.hub_url} {settings.WEBSUBSUB_MAX_CONNECT_RETRIES} '
+                f'times. Increase settings.WEBSUBSUB_MAX_CONNECT_RETRIES to allow more '
                 f'attempts. Or reset retry counters with `./manage.py websub_reset_counters`.'
             )
             
@@ -80,20 +80,20 @@ def retry_failed():
         'unsubscribe_attempt_time__lt': now() - waittime,
         'unsubscribe_status': 'verifying',
         # TODO: split this setting for error/timeout counters?
-        'verifytimeout_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
+        'verifytimeout_count__lt': settings.WEBSUBSUB_MAX_VERIFY_RETRIES
     })
     connerror = Q(**{
         'unsubscribe_status': 'connerror',
-        'connerror_count__lt': settings.WEBSUBS_MAX_CONNECT_RETRIES
+        'connerror_count__lt': settings.WEBSUBSUB_MAX_CONNECT_RETRIES
     })
     huberror = Q(**{
         'unsubscribe_status': 'huberror',
-        'huberror_count__lt': settings.WEBSUBS_MAX_HUB_ERROR_RETRIES
+        'huberror_count__lt': settings.WEBSUBSUB_MAX_HUB_ERROR_RETRIES
     })
     verifyerror = Q(**{
         'unsubscribe_status': 'verifyerror',
         # TODO: split this setting for error/timeout counters?
-        'verifyerror_count__lt': settings.WEBSUBS_MAX_VERIFY_RETRIES
+        'verifyerror_count__lt': settings.WEBSUBSUB_MAX_VERIFY_RETRIES
     })
 
     errors = verify_timeout | connerror | huberror | verifyerror

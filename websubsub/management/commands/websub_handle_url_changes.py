@@ -152,7 +152,7 @@ class Command(BaseCommand):
 
     def handle_static(self):
         current = []
-        for hub_url, hub in settings.WEBSUBS_HUBS.items():
+        for hub_url, hub in settings.WEBSUBSUB_HUBS.items():
             subscriptions = hub.get('subscriptions', [])
             print(f'Found {len(subscriptions)} static subscriptions for hub {hub_url} in settings.')
             for subscription in subscriptions:
