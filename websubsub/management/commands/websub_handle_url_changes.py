@@ -26,10 +26,10 @@ class Command(BaseCommand):
     def handle_rebased(self):
         self.rebased = Subscription.objects \
             .filter(callback_url__isnull=False) \
-            .exclude(callback_url__startswith=settings.SITE_URL)
+            .exclude(callback_url__startswith=settings.WEBSUBSUB_OWN_ROOTURL)
         
         if self.rebased.exists():
-            print(f'Have you changed SITE_URL to {settings.SITE_URL}?')
+            print(f'Have you changed WEBSUBSUB_OWN_ROOTURL to {settings.WEBSUBSUB_OWN_ROOTURL}?')
             print(f'Found {self.rebased.count()} subscriptions with different base domain.')
             while True:
                 answer = input('Fix now? (y/N/show): ')
@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 if answer in ('y', 'Y'):
                     for ssn in self.rebased:
                         path = reverse(ssn.callback_urlname, args=[ssn.id])
-                        self.update_url(ssn, urljoin(settings.SITE_URL, path))
+                        self.update_url(ssn, urljoin(settings.WEBSUBSUB_OWN_ROOTURL, path))
                     break
             
             
@@ -62,7 +62,7 @@ class Command(BaseCommand):
             except NoReverseMatch:
                 reversed_url = None 
             else:
-                reversed_url = urljoin(settings.SITE_URL, path)
+                reversed_url = urljoin(settings.WEBSUBSUB_OWN_ROOTURL, path)
                 
             if not reversed_url and not resolved_urlname:
                 #TODO: fuzzy match by urlname

@@ -22,14 +22,14 @@ INSTALLED_APPS = [
 ]
 ```
 
-Set the `SITE_URL` setting in your `settings.py` to the full url of your project site, e.g.
-`https://example.com`. It will be used to build full callback urls.
+Set the `WEBSUBSUB_OWN_ROOTURL` setting in your `settings.py` to the full url of your project 
+site, e.g. `https://example.com/`. It will be used to build full callback urls.
 
 Set `DUMBLOCK_REDIS_URL` settings in your `settings.py`. Redis locks are used to ensure
 subscription/unsubscription tasks are consistent with hub and local database.
 
 ```
-SITE_URL = 'http://example.com'
+WEBSUBSUB_OWN_ROOTURL = 'http://example.com/'
 DUMBLOCK_REDIS_URL= 'redis://redishost:6379'
 ```
 
@@ -90,10 +90,8 @@ to subscribe with hub.
 
 #### Static subscriptions
 
-[TODO] Not sure it is the best way to handle static subscriptions.
-
 Static subscriptions can be defined in your `settings.py`, they are then materialized
-with management command `./manage.py websubscribe_static`.
+with management command `./manage.py websub_static_subscribe`.
 
 Add static subscriptions in your `settings.py`:
 
@@ -108,7 +106,7 @@ WEBSUBSUB_HUBS = {
 }
 ```
 
-Execute `./manage.py websubscribe_static`
+Execute `./manage.py websub_static_subscribe`
 
 ### Unsubscribe
 
@@ -119,13 +117,10 @@ from websubsub.models import Subscription
 Subscription.objects.get(pk=4).unsubscribe()
 ```
 
-## Discovery
-
-Not implemented
 
 ## Settings
 
-_SITE_URL_ - ex.: `https://example.com`. Required. Will be used to build full callback urls.
+_WEBSUBSUB_OWN_ROOTURL_ - ex.: `https://example.com/`. Required. Will be used to build full callback urls.
 
 _DUMBLOCK_REDIS_URL_ - ex.: `redis://redishost:6379`. Required. Will be used to lock atomic tasks.
 

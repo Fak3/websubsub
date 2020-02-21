@@ -81,7 +81,7 @@ def subscribe(*, pk):
             )
         raise Exception(msg) from e
     
-    fullurl = urljoin(settings.SITE_URL, path)
+    fullurl = urljoin(settings.WEBSUBSUB_OWN_ROOTURL, path)
     if ssn.callback_url \
        and not ssn.callback_url == fullurl \
        and not settings.WEBSUBSUB_AUTOFIX_URLS:

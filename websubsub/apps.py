@@ -20,7 +20,7 @@ class WebsubsubConfig(AppConfig):
 
     required_settings = [
         'DUMBLOCK_REDIS_URL',
-        'SITE_URL'
+        'WEBSUBSUB_OWN_ROOTURL'
     ]
     WEBSUBSUB_MAX_CONNECT_RETRIES = 2
     WEBSUBSUB_MAX_HUB_ERROR_RETRIES = 2
@@ -108,14 +108,14 @@ class WebsubsubConfig(AppConfig):
                 'remove all unresolvable subscriptions from database.'
             )
             
-        # Check if settings.SITE_URL was changed
+        # Check if settings.WEBSUBSUB_OWN_ROOTURL was changed
         rebased = Subscription.objects \
             .filter(callback_url__isnull=False) \
-            .exclude(callback_url__startswith=settings.SITE_URL)
+            .exclude(callback_url__startswith=settings.WEBSUBSUB_OWN_ROOTURL)
         
         if rebased.exists():
             logger.error(
-                f'Have you changed SITE_URL to {settings.SITE_URL} ? '
+                f'Have you changed WEBSUBSUB_OWN_ROOTURL to {settings.WEBSUBSUB_OWN_ROOTURL} ? '
                 f'Found {rebased.count()} subscriptions with different base domain. '
                 'Run `./manage.py websub_handle_url_changes` to fix urls and resubscribe.'
             )

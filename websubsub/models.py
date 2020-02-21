@@ -109,7 +109,7 @@ class Subscription(Model):
         return reverse(self.callback_urlname, args=(self.pk,))
     
     def reverse_fullurl(self):
-        return urljoin(settings.SITE_URL, self.reverse_url())
+        return urljoin(settings.WEBSUBSUB_OWN_ROOTURL, self.reverse_url())
     
     def update(self, **kwargs):
         """
