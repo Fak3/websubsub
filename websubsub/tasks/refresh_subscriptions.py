@@ -19,7 +19,7 @@ from . import subscribe
 logger = logging.getLogger('websubsub.tasks.refresh_subscriptions')
 
 
-@shared_task
+@shared_task(name='websubsub.tasks.refresh_subscriptions')
 def refresh_subscriptions():
     """
     This task should be scheduled to launch periodically

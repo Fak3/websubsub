@@ -20,7 +20,7 @@ from . import unsubscribe
 logger = logging.getLogger('websubsub.tasks.retry_failed')
 
 
-@shared_task
+@shared_task(name='websubsub.tasks.retry_failed')
 def retry_failed():
     """
     This task should be scheduled to launch periodically

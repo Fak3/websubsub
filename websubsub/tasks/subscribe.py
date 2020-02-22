@@ -22,7 +22,8 @@ def _declared_static_subscriptions():
         for ssn in hub.get('subscriptions', []):
             yield (hub_url, ssn['callback_urlname'], ssn['topic'])
 
-@shared_task
+
+@shared_task(name='websubsub.tasks.subscribe')
 @lock_or_exit('websubsub_{pk}')
 def subscribe(*, pk):
     ssn = Subscription.objects.get(pk=pk)

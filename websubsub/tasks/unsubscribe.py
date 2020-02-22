@@ -18,7 +18,7 @@ from ..models import Subscription
 logger = logging.getLogger('websubsub.tasks.unsubscribe')
 
 
-@shared_task(retries=10)
+@shared_task(name='websubsub.tasks.unsubscribe', retries=10)
 @lock_wait('websubsub_{pk}')
 def unsubscribe(*, pk):
     ssn = Subscription.objects.get(pk=pk)
