@@ -75,6 +75,18 @@ class WebsubsubConfig(AppConfig):
                         f'NoReverseMatch for static subscription {ssn}. '
                         'Please change callback_urlname to the correct one.'
                     )
+                dbssn = Subscription.objects.filter(
+                    static=True, 
+                    hub_url=hub_url, 
+                    callback_urlname=ssn['callback_urlname'],
+                    topic=ssn['topic'],
+                )
+                if not dbssn.exists():
+                    logger.error(
+                        f'Static subscription {ssn} declared in your settings does not '
+                        f'exist in the database. Run `./manage.py websub_static_subscribe` '
+                        f'to create it.'
+                    )
                     
         # Find orphan static subscriptions
         for ssn in Subscription.objects.filter(static=True):
