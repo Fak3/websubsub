@@ -126,6 +126,7 @@ class WssView(APIView):
             for ssn in Subscription.objects.all():
                 by_status[ssn.subscribe_status].append({
                     'id': str(ssn.id),
+                    'hub': ssn.hub_url,
                     'topic': ssn.topic,
                     'callback_urlname': ssn.callback_urlname
                 })
