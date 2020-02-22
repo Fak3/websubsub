@@ -14,7 +14,7 @@ logger = logging.getLogger('websubsub.apps')
 class ImproperlyConfigured(Exception):
     pass
 
-
+            
 class WebsubsubConfig(AppConfig):
     name = 'websubsub'
 
@@ -61,17 +61,32 @@ class WebsubsubConfig(AppConfig):
 
 
     def check_static_subscriptions(self):
+        from .models import Subscription
+        current = set()
+        
         # Check if all static subscriptions urlnames properly resolve to urls.
         for hub_url, hub in settings.WEBSUBSUB_HUBS.items():
-            for subscription in hub.get('subscriptions', []):
+            for ssn in hub.get('subscriptions', []):
+                current.add((hub_url, ssn['callback_urlname'], ssn['topic']))
                 try:
-                    reverse(subscription['callback_urlname'], args=[uuid4()])
+                    reverse(ssn['callback_urlname'], args=[uuid4()])
                 except NoReverseMatch:
                     logger.error(
-                        f'NoReverseMatch for static subscription {subscription}. '
+                        f'NoReverseMatch for static subscription {ssn}. '
                         'Please change callback_urlname to the correct one.'
                     )
-                
+                    
+        # Find orphan static subscriptions
+        for ssn in Subscription.objects.filter(static=True):
+            if (ssn.hub_url, ssn.callback_urlname, ssn.topic) not in current:
+                logger.error(
+                    f'Found orphan static subscription {ssn.pk} in the database:\n'
+                    f'  topic: {ssn.topic}\n'
+                    f'  hub: {ssn.hub_url}\n'
+                    f'  callback_urlname: {ssn.callback_urlname}\n'
+                    f'You can purge old static subscriptions from the database using '
+                    '`./manage.py websub_static_subscribe --purge-orphans`'
+                )
 
     def check_hub_url_slash_consistency(self):
         from .models import Subscription
