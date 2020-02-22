@@ -1,4 +1,6 @@
+import json
 import logging
+from collections import defaultdict
 from datetime import timedelta
 
 from django.conf import settings
@@ -107,7 +109,7 @@ class WssView(APIView):
             return Response('Unsubscribed')
 
         if ssn.subscribe_status != 'verifying':
-            logger.error(f'Subscription {ssn.pk} received subscription verification request,'
+            logger.warning(f'Subscription {ssn.pk} received subscription verification request,'
                          f' but its status is "{ssn.get_subscribe_status_display()}"')
             # TODO: should we ignore it?
 
@@ -119,6 +121,15 @@ class WssView(APIView):
         ssn.verifytimeout_count = 0
         ssn.save()
         logger.info(f'Subscription {ssn.pk} verified')
+        if settings.DEBUG:
+            by_status = defaultdict(list)
+            for ssn in Subscription.objects.all():
+                by_status[ssn.subscribe_status].append({
+                    'id': str(ssn.id),
+                    'topic': ssn.topic,
+                    'callback_urlname': ssn.callback_urlname
+                })
+            logger.debug('Current subscriptions by status:\n' + json.dumps(by_status, indent=2))
         return HttpResponse(request.GET['hub.challenge'])
 
     def on_unsubscribe(self, request, ssn):
