@@ -10,7 +10,7 @@ from .base import BaseTestCase, method_url_body
 
 # GIVEN static subscription
 @override_settings(
-    WEBSUBS_HUBS = {
+    WEBSUBSUB_HUBS = {
         'http://hub.io': {
             'subscriptions': [{
                 'topic': 'news', 
@@ -20,15 +20,15 @@ from .base import BaseTestCase, method_url_body
 })
 class StaticSubscriptionCreateTest(BaseTestCase):
     """
-    calling websubscribe_static should create Subscription, trigger request to hub, 
+    calling websub_static_subscribe should create Subscription, trigger request to hub, 
     and then mark Subscription as `verifying`.
     """
     def test_subscribe_success(self):
         # GIVEN hub which returns HTTP_202_ACCEPTED
         responses.add('POST', 'http://hub.io', status=202)
 
-        # WHEN websubscribe_static is called
-        management.call_command('websubscribe_static')
+        # WHEN websub_static_subscribe is called
+        management.call_command('websub_static_subscribe')
         
         # THEN exactly one Subscription should get created
         assert len(Subscription.objects.all()) == 1

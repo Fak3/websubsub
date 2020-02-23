@@ -27,11 +27,13 @@ class Subscription(Model):
     static = BooleanField(default=False, editable=False)
 
     STATUS = [
+        # TODO: find out if 'requesting' guarantees that subscribe task will be scheduled
+        # everywhere throughout the code
         ('requesting', 'scheduled to be requested asap'),
         ('connerror', 'connection error'),
         ('huberror', 'hub returned error'),
-        ('verifying', 'waiting for hub verification request'),
-        ('verifyerror', 'hub sent malformed verification request'),
+        ('verifying', 'waiting for hub to send us subscription confirmation request'),
+        ('verifyerror', 'hub sent us malformed subscription confirmation request'),
         # 'verified' status merely means that we sent verification challenge
         # back to the hub. It does not mean that hub approved it and (un)subscribed
         # as was requested.
@@ -53,13 +55,13 @@ class Subscription(Model):
     @classmethod
     def create(cls, topic, urlname, hub=None, static=False):
         from . import tasks
-        if not hub and not settings.WEBSUBS_DEFAULT_HUB_URL:
-            raise Exception('Provide hub or set WEBSUBS_DEFAULT_HUB_URL setting.')
+        if not hub and not settings.WEBSUBSUB_DEFAULT_HUB_URL:
+            raise Exception('Provide hub or set WEBSUBSUB_DEFAULT_HUB_URL setting.')
 
         ssn = cls.objects.create(
             topic=topic,
             callback_urlname=urlname,
-            hub_url=hub or settings.WEBSUBS_DEFAULT_HUB_URL,
+            hub_url=hub or settings.WEBSUBSUB_DEFAULT_HUB_URL,
             static=static
         )
         ssn._subscriberesult = tasks.subscribe.delay(pk=ssn.pk)
@@ -82,6 +84,7 @@ class Subscription(Model):
         self.verifyerror_count = 0
         self.verifytimeout_count = 0
         self.subscribe_status = 'requesting'
+        self.subscribe_attempt_time = None
         self.save()
 
         return tasks.subscribe.delay(pk=self.pk)
@@ -97,6 +100,7 @@ class Subscription(Model):
         self.verifyerror_count = 0
         self.verifytimeout_count = 0
         self.unsubscribe_status = 'requesting'
+        self.unsubscribe_attempt_time = None
         self.save()
 
         return tasks.unsubscribe.delay(pk=self.pk)
@@ -105,7 +109,7 @@ class Subscription(Model):
         return reverse(self.callback_urlname, args=(self.pk,))
     
     def reverse_fullurl(self):
-        return urljoin(settings.SITE_URL, self.reverse_url())
+        return urljoin(settings.WEBSUBSUB_OWN_ROOTURL, self.reverse_url())
     
     def update(self, **kwargs):
         """
@@ -117,10 +121,10 @@ class Subscription(Model):
 
         >>> user.email = 'user@example.com'
         >>> user.last_name = 'Bob'
-        >>> user.save()
+        >>> user.save(update_fields=['email', 'last_name'])
 
         """
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
-        self.save()
+        self.save(update_fields=kwargs)

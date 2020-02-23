@@ -14,21 +14,21 @@ logger = logging.getLogger('websubsub.apps')
 class ImproperlyConfigured(Exception):
     pass
 
-
+            
 class WebsubsubConfig(AppConfig):
     name = 'websubsub'
 
     required_settings = [
         'DUMBLOCK_REDIS_URL',
-        'SITE_URL'
+        'WEBSUBSUB_OWN_ROOTURL'
     ]
-    WEBSUBS_MAX_CONNECT_RETRIES = 2
-    WEBSUBS_MAX_HUB_ERROR_RETRIES = 2
-    WEBSUBS_MAX_VERIFY_RETRIES = 2
-    WEBSUBS_VERIFY_WAIT_TIME = 60  # seconds
-    WEBSUBS_HUBS = {}
-    WEBSUBS_DEFAULT_HUB_URL = None
-    WEBSUBS_AUTOFIX_URLS = True
+    WEBSUBSUB_MAX_CONNECT_RETRIES = 2
+    WEBSUBSUB_MAX_HUB_ERROR_RETRIES = 2
+    WEBSUBSUB_MAX_VERIFY_RETRIES = 2
+    WEBSUBSUB_VERIFY_WAIT_TIME = 60  # seconds
+    WEBSUBSUB_HUBS = {}
+    WEBSUBSUB_DEFAULT_HUB_URL = None
+    WEBSUBSUB_AUTOFIX_URLS = True
 
     def ready(self):
         # Initialize settings with default values.
@@ -61,17 +61,44 @@ class WebsubsubConfig(AppConfig):
 
 
     def check_static_subscriptions(self):
+        from .models import Subscription
+        current = set()
+        
         # Check if all static subscriptions urlnames properly resolve to urls.
-        for hub_url, hub in settings.WEBSUBS_HUBS.items():
-            for subscription in hub.get('subscriptions', []):
+        for hub_url, hub in settings.WEBSUBSUB_HUBS.items():
+            for ssn in hub.get('subscriptions', []):
+                current.add((hub_url, ssn['callback_urlname'], ssn['topic']))
                 try:
-                    reverse(subscription['callback_urlname'], args=[uuid4()])
+                    reverse(ssn['callback_urlname'], args=[uuid4()])
                 except NoReverseMatch:
                     logger.error(
-                        f'NoReverseMatch for static subscription {subscription}. '
+                        f'NoReverseMatch for static subscription {ssn}. '
                         'Please change callback_urlname to the correct one.'
                     )
-                
+                dbssn = Subscription.objects.filter(
+                    static=True, 
+                    hub_url=hub_url, 
+                    callback_urlname=ssn['callback_urlname'],
+                    topic=ssn['topic'],
+                )
+                if not dbssn.exists():
+                    logger.error(
+                        f'Static subscription {ssn} declared in your settings does not '
+                        f'exist in the database. Run `./manage.py websub_static_subscribe` '
+                        f'to create it.'
+                    )
+                    
+        # Find orphan static subscriptions
+        for ssn in Subscription.objects.filter(static=True):
+            if (ssn.hub_url, ssn.callback_urlname, ssn.topic) not in current:
+                logger.error(
+                    f'Found orphan static subscription {ssn.pk} in the database:\n'
+                    f'  topic: {ssn.topic}\n'
+                    f'  hub: {ssn.hub_url}\n'
+                    f'  callback_urlname: {ssn.callback_urlname}\n'
+                    f'You can purge old static subscriptions from the database using '
+                    '`./manage.py websub_static_subscribe --purge-orphans`'
+                )
 
     def check_hub_url_slash_consistency(self):
         from .models import Subscription
@@ -108,14 +135,14 @@ class WebsubsubConfig(AppConfig):
                 'remove all unresolvable subscriptions from database.'
             )
             
-        # Check if settings.SITE_URL was changed
+        # Check if settings.WEBSUBSUB_OWN_ROOTURL was changed
         rebased = Subscription.objects \
             .filter(callback_url__isnull=False) \
-            .exclude(callback_url__startswith=settings.SITE_URL)
+            .exclude(callback_url__startswith=settings.WEBSUBSUB_OWN_ROOTURL)
         
         if rebased.exists():
             logger.error(
-                f'Have you changed SITE_URL to {settings.SITE_URL} ? '
+                f'Have you changed WEBSUBSUB_OWN_ROOTURL to {settings.WEBSUBSUB_OWN_ROOTURL} ? '
                 f'Found {rebased.count()} subscriptions with different base domain. '
                 'Run `./manage.py websub_handle_url_changes` to fix urls and resubscribe.'
             )

@@ -14,18 +14,27 @@ log = logging.getLogger('websubsub')
 class Command(BaseCommand):
     help = 'Delete all subscriptions from database.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-y', '--yes',
+            action='store_true',
+            help='answer yes to all',
+        )
+        
     def handle(self, *args, **kwargs):
         count =  Subscription.objects.count()
         if not count:
             print('No subscriptions in the database.')
             return
-        text = f'Are you sure you want to delete {count} subscriptions? (y/N): '
-        while True:
-            answer = input(text)
-            if not answer or answer in ('n','N'):
-                return
-            if answer in ('y', 'Y'):
-                break
+        
+        if not kwargs['yes']:
+            text = f'Are you sure you want to delete {count} subscriptions? (y/N): '
+            while True:
+                answer = input(text)
+                if not answer or answer in ('n','N'):
+                    return
+                if answer in ('y', 'Y'):
+                    break
         
         Subscription.objects.all().delete()
         print(f'{count} subscriptions was successfully removed from database')

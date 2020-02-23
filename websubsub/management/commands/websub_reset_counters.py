@@ -17,16 +17,20 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
 
         Subscription.objects.update(
-            connerror_count = 0
-            huberror_count = 0
-            verifytimeout_count = 0
-            verifyerror_count = 0
+            connerror_count = 0,
+            huberror_count = 0,
+            verifytimeout_count = 0,
+            verifyerror_count = 0,
+            subscribe_attempt_time = None,
+            unsubscribe_attempt_time = None
         )
         print(
             f'{Subscription.objects.count()} subscriptions retry counters now got'
             ' reset to\n'
-            '  connerror_count = 0'
-            '  huberror_count = 0'
-            '  verifytimeout_count = 0'
-            '  verifyerror_count = 0'
+            '  connerror_count = 0\n'
+            '  huberror_count = 0\n'
+            '  verifytimeout_count = 0\n'
+            '  verifyerror_count = 0\n'
+            '  subscribe_attempt_time = None\n'
+            '  unsubscribe_attempt_time = None'
         )

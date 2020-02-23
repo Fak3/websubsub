@@ -18,7 +18,7 @@ from ..models import Subscription
 logger = logging.getLogger('websubsub.tasks.unsubscribe')
 
 
-@shared_task(retries=10)
+@shared_task(name='websubsub.tasks.unsubscribe', retries=10)
 @lock_wait('websubsub_{pk}')
 def unsubscribe(*, pk):
     ssn = Subscription.objects.get(pk=pk)
@@ -27,7 +27,7 @@ def unsubscribe(*, pk):
         logger.warning(f'Subscription {ssn.pk} was explicitly resubscribed, skipping.')
         return
 
-    waittime = timedelta(seconds=settings.WEBSUBS_VERIFY_WAIT_TIME)
+    waittime = timedelta(seconds=settings.WEBSUBSUB_VERIFY_WAIT_TIME)
     if ssn.unsubscribe_status == 'verifying' \
        and now() < ssn.unsubscribe_attempt_time + waittime:
         logger.warning(
@@ -52,7 +52,7 @@ def unsubscribe(*, pk):
             logger.error(str(e))
         else:
             logger.exception(e)
-        left = max(0, settings.WEBSUBS_MAX_CONNECT_RETRIES - ssn.connerror_count)
+        left = max(0, settings.WEBSUBSUB_MAX_CONNECT_RETRIES - ssn.connerror_count)
         logger.error(f'While unsubscribing {ssn.pk} failed to connect to hub. Retries left: {left}')
         return
     else:
@@ -74,7 +74,7 @@ def unsubscribe(*, pk):
         ssn.unsubscribe_status = 'huberror'
         ssn.huberror_count += 1
         ssn.save()
-        left = max(0, settings.WEBSUBS_MAX_HUB_ERROR_RETRIES - ssn.huberror_count)
+        left = max(0, settings.WEBSUBSUB_MAX_HUB_ERROR_RETRIES - ssn.huberror_count)
         logger.error(f'Subscription {ssn.pk} got hub error {rr.status_code}. Retries left: {left}')
         return
 

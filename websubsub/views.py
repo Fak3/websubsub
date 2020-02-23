@@ -1,4 +1,6 @@
+import json
 import logging
+from collections import defaultdict
 from datetime import timedelta
 
 from django.conf import settings
@@ -10,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from .models import Subscription
+from . import tasks
 
 
 logger = logging.getLogger('websubsub.views')
@@ -39,6 +42,7 @@ class WssView(APIView):
     def as_view(cls, handler_task, **kwargs):
         kwargs['handler_task'] = handler_task
         return super().as_view(**kwargs)
+
 
     def get(self, request, *args, **kwargs):
         """
@@ -71,6 +75,7 @@ class WssView(APIView):
         elif mode == 'denied':
             return self.on_denied(request, ssn)
 
+
     def on_subscribe(self, request, ssn):
         """
         The subscriber MUST confirm that the hub.topic corresponds to a pending
@@ -89,16 +94,20 @@ class WssView(APIView):
         """
         if 'hub.challenge' not in request.GET:
             logger.error(f'Missing hub.challenge in subscription verification {ssn.pk}!')
-            ssn.subscribe_status = 'verifyerror'
-            ssn.verifyerror_count += 1
-            ssn.save()
+            tasks.save.delay(
+                pk = ssn.pk,
+                subscribe_status = 'verifyerror',
+                verifyerror_count = ssn.verifyerror_count + 1
+            )
             return Response('Missing hub.challenge', status=HTTP_400_BAD_REQUEST)
 
         if not request.GET.get('hub.lease_seconds', '').isdigit():
             logger.error(f'Missing integer hub.lease_seconds in subscription verification {ssn.pk}!')
-            ssn.subscribe_status = 'verifyerror'
-            ssn.verifyerror_count += 1
-            ssn.save()
+            tasks.save.delay(
+                pk = ssn.pk,
+                subscribe_status = 'verifyerror',
+                verifyerror_count = ssn.verifyerror_count + 1
+            )
             return Response('hub.lease_seconds required and must be integer', status=HTTP_400_BAD_REQUEST)
 
         if ssn.unsubscribe_status is not None:
@@ -106,42 +115,41 @@ class WssView(APIView):
                          f' but its was explicitly unsubscribed before.')
             return Response('Unsubscribed')
 
-        if ssn.subscribe_status != 'verifying':
-            logger.error(f'Subscription {ssn.pk} received subscription verification request,'
-                         f' but its status is "{ssn.get_subscribe_status_display()}"')
-            # TODO: should we ignore it?
-
-        ssn.subscribe_status = 'verified'
-        ssn.lease_expiration_time = now() + timedelta(seconds=int(request.GET['hub.lease_seconds']))
-        ssn.connerror_count = 0
-        ssn.huberror_count = 0
-        ssn.verifyerror_count = 0
-        ssn.verifytimeout_count = 0
-        ssn.save()
-        logger.info(f'Subscription {ssn.pk} verified')
+        tasks.save.delay(
+            pk = ssn.pk,
+            subscribe_status = 'verified',
+            lease_expiration_time = now() + timedelta(seconds=int(request.GET['hub.lease_seconds'])),
+            connerror_count = 0,
+            huberror_count = 0,
+            verifyerror_count = 0,
+            verifytimeout_count = 0
+        )
+        logger.info(f'Got {ssn.pk} subscribe confirmation from hub.')
         return HttpResponse(request.GET['hub.challenge'])
+
 
     def on_unsubscribe(self, request, ssn):
         if 'hub.challenge' not in request.GET:
             logger.error(f'Missing hub.challenge in unsubscription verification {ssn.pk}!')
-            ssn.unsubscribe_status = 'verifyerror'
-            ssn.verifyerror_count += 1
-            ssn.save()
+            tasks.save.delay(
+                pk = ssn.pk,
+                unsubscribe_status = 'verifyerror',
+                verifyerror_count = ssn.verifyerror_count + 1
+            )
             return Response('Missing hub.challenge', status=HTTP_400_BAD_REQUEST)
 
-        if ssn.unsubscribe_status != 'verifying':
-            logger.error(f'Subscription {ssn.pk} received unsubscription verification request,'
-                         f' but its status is "{ssn.get_unsubscribe_status_display()}"')
-            # TODO: should we ignore it?
-
-        ssn.unsubscribe_status = 'verified'
-        ssn.connerror_count = 0
-        ssn.huberror_count = 0
-        ssn.verifyerror_count = 0
-        ssn.verifytimeout_count = 0
-        ssn.save()
-        logger.info(f'Unsubscribing {ssn.pk} verified')
+        tasks.save.delay(
+            pk = ssn.pk,
+            unsubscribe_status = 'verified',
+            #lease_expiration_time = None,  # TODO: should we reset it?
+            connerror_count = 0,
+            huberror_count = 0,
+            verifyerror_count = 0,
+            verifytimeout_count = 0
+        )
+        logger.info(f'Got {ssn.pk} unsubscribe confirmation from hub.')
         return HttpResponse(request.GET['hub.challenge'])
+
 
     def on_denied(self, request, ssn):
         """
@@ -166,7 +174,7 @@ class WssView(APIView):
             return Response('Unwanted subscription')
 
         logger.error(f'Hub denied subscription {ssn.pk}!')
-        ssn.update(subscribe_status='denied')
+        tasks.save.delay(pk=ssn.pk, subscribe_status='denied')
         return Response('')
 
 
@@ -186,7 +194,10 @@ class WssView(APIView):
         try:
             ssn = Subscription.objects.get(id=id)
         except Subscription.DoesNotExist:
-            logger.error(f'Received unwanted subscription {id} POST request!')
+            logger.error(
+                f'Received unwanted subscription {id} POST request! Sending status '
+                '410 back to hub.'
+            )
             return Response('Unwanted subscription', status=410)
         
         ssn.update(time_last_event_received=now())

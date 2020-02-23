@@ -22,14 +22,14 @@ INSTALLED_APPS = [
 ]
 ```
 
-Set the `SITE_URL` setting in your `settings.py` to the full url of your project site, e.g.
-`https://example.com`. It will be used to build full callback urls.
+Set the `WEBSUBSUB_OWN_ROOTURL` setting in your `settings.py` to the full url of your project 
+site, e.g. `https://example.com/`. It will be used to build full callback urls.
 
 Set `DUMBLOCK_REDIS_URL` settings in your `settings.py`. Redis locks are used to ensure
 subscription/unsubscription tasks are consistent with hub and local database.
 
 ```
-SITE_URL = 'http://example.com'
+WEBSUBSUB_OWN_ROOTURL = 'http://example.com/'
 DUMBLOCK_REDIS_URL= 'redis://redishost:6379'
 ```
 
@@ -90,15 +90,13 @@ to subscribe with hub.
 
 #### Static subscriptions
 
-[TODO] Not sure it is the best way to handle static subscriptions.
-
 Static subscriptions can be defined in your `settings.py`, they are then materialized
-with management command `./manage.py websubscribe_static`.
+with management command `./manage.py websub_static_subscribe`.
 
 Add static subscriptions in your `settings.py`:
 
 ```
-WEBSUBS_HUBS = {
+WEBSUBSUB_HUBS = {
     'http://example.com': {
         'subscriptions': [
             {'topic': 'mytopic', 'callback_urlname': 'webnews'},
@@ -108,7 +106,7 @@ WEBSUBS_HUBS = {
 }
 ```
 
-Execute `./manage.py websubscribe_static`
+Execute `./manage.py websub_static_subscribe`
 
 ### Unsubscribe
 
@@ -119,33 +117,35 @@ from websubsub.models import Subscription
 Subscription.objects.get(pk=4).unsubscribe()
 ```
 
-## Discovery
-
-Not implemented
 
 ## Settings
 
-_SITE_URL_ - ex.: `https://example.com`. Required. Will be used to build full callback urls.
+_WEBSUBSUB_OWN_ROOTURL_ - ex.: `https://example.com/`. Required. Will be used to build full callback urls.
 
 _DUMBLOCK_REDIS_URL_ - ex.: `redis://redishost:6379`. Required. Will be used to lock atomic tasks.
 
-_WEBSUBS_AUTOFIX_URLS_ - If `True`, then `websubsub.tasks.subscribe()` task will be allowed to ovewrite subscription.callback_url, resolving its callback_urlname. If False, it will print an error and exit. Default: `True`
+_WEBSUBSUB_AUTOFIX_URLS_ - If `True`, then `websubsub.tasks.subscribe()` task will be allowed to ovewrite subscription.callback_url, resolving its callback_urlname. If False, it will print an error and exit. Default: `True`
 
-_WEBSUBS_DEFAULT_HUB_URL_
+_WEBSUBSUB_DEFAULT_HUB_URL_
 
-_WEBSUBS_MAX_CONNECT_RETRIES_
+_WEBSUBSUB_MAX_CONNECT_RETRIES_
 
-_WEBSUBS_MAX_HUB_ERROR_RETRIES_
+_WEBSUBSUB_MAX_HUB_ERROR_RETRIES_
 
-_WEBSUBS_MAX_VERIFY_RETRIES_
+_WEBSUBSUB_MAX_VERIFY_RETRIES_
 
-_WEBSUBS_VERIFY_WAIT_TIME_ - How many seconds should pass before unverified subscription is
+_WEBSUBSUB_VERIFY_WAIT_TIME_ - How many seconds should pass before unverified subscription is
 considered failed. After that time, `websubsub.tasks.retry_failed()` task will be able to retry
 subscription process again.
 
 ## Management commands
 
-`./manage.py websubscribe_static` - Materialize static subscriptions from settings.
+`./manage.py websub_static_subscribe` - Materialize static subscriptions from settings. Optional arguments:
+
+* `--purge-orphans` - delete old static subscriptions from database
+* `-y`, `--yes` - answer yes to all
+* `--reset-counters` - reset retry counters
+* `--force` - send new subscription request to hub even if already subscribed or explicitly unsubscribed
 
 `./manage.py websub_purge_unresolvable` - Delete all subscriptions with unresolvable urlname from database.
 
