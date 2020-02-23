@@ -194,7 +194,10 @@ class WssView(APIView):
         try:
             ssn = Subscription.objects.get(id=id)
         except Subscription.DoesNotExist:
-            logger.error(f'Received unwanted subscription {id} POST request!')
+            logger.error(
+                f'Received unwanted subscription {id} POST request! Sending status '
+                '410 back to hub.'
+            )
             return Response('Unwanted subscription', status=410)
         
         ssn.update(time_last_event_received=now())

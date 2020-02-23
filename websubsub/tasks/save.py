@@ -66,5 +66,5 @@ def save(*, pk, **kwargs):
             count = dynamic.values_list('subscribe_status').annotate(total=Count('subscribe_status'))
             logger.debug(f'Non-static subscriptions by status: {dict(count)}')
         else:
-            logger.debug('Non-static: 0')
+            logger.debug('Non-static subscriptions by status: 0')
         
