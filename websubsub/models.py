@@ -121,10 +121,10 @@ class Subscription(Model):
 
         >>> user.email = 'user@example.com'
         >>> user.last_name = 'Bob'
-        >>> user.save()
+        >>> user.save(update_fields=['email', 'last_name'])
 
         """
         for attr, val in kwargs.items():
             setattr(self, attr, val)
 
-        self.save()
+        self.save(update_fields=kwargs)
