@@ -1,6 +1,6 @@
 celery==4.4.0
 django<3.1
-djangorestframework==3.11.0
+djangorestframework==3.11.2
 django-environ==0.4.4
 dumblock==0.1
 pytest==5.3.5
