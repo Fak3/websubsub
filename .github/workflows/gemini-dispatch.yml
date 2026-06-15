@@ -12,9 +12,14 @@ jobs:
     # Restrict the trigger to pull request comments only
     if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
       - name: Run Gemini Dispatch
         uses: google-github-actions/run-gemini-cli@main
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           gemini_api_key_present: true
+          github_pr_number: ${{ github.event.issue.number }}
