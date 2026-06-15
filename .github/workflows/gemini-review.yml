@@ -16,5 +16,6 @@ jobs:
 
       - name: Run Gemini PR Review
         uses: google-github-actions/run-gemini-cli@main
-        with:
-          gemini-key: ${{ secrets.GEMINI_API_KEY }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
