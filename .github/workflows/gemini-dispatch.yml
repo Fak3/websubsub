@@ -1,0 +1,19 @@
+name: Gemini Dispatch
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dispatch:
+    # Restrict the trigger to pull request comments only
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Gemini Dispatch
+        uses: google-github-actions/run-gemini-cli@main
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
