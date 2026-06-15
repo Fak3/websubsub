@@ -1,0 +1,43 @@
+[project]
+name = "websubsub"
+version = "0.9.4"
+description = "Default template for PDM package"
+authors = [
+    {name = "Evstifeev Roman", email = "someuniquename@gmail.com"},
+]
+dependencies = [
+    "celery",
+    "django<3.1",
+    "djangorestframework==3.11.2",
+    "django-environ==0.4.4",
+    "dumblock==0.1",
+    "redis==2.10.6",
+    "requests",
+    "requests-toolbelt",
+    "urllib3",
+    "setuptools>=82.0.1",
+    "legacy-cgi>=2.6.4",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[dependency-groups]
+test = [
+    "pytest>=9.0.3",
+    "pytest-django>=4.12.0",
+    "pytest-env>=1.6.0",
+    "pytest-pythonpath>=0.7.3",
+    "pytest-cov>=7.1.0",
+    "model-mommy<1.6",
+    "mockredispy@git+https://github.com/Fak3/mockredis",
+    "responses>=0.10.15",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
