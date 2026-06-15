@@ -17,7 +17,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check secret
-        run: echo "Secret exists: ${{ secrets.GEMINI_API_KEY != '' }}"
+        run: 'echo "Secret length: ${#SECRET}"'
+        env:
+          SECRET: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Run Gemini PR Review
         uses: google-github-actions/run-gemini-cli@main
