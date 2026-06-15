@@ -1,0 +1,20 @@
+name: Gemini PR Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Run Gemini PR Review
+        uses: google-github-actions/run-gemini-cli@main
+        with:
+          gemini-key: ${{ secrets.GEMINI_API_KEY }}
